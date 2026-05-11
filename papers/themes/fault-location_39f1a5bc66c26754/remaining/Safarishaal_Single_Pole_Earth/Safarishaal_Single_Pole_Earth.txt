@@ -1,0 +1,288 @@
+ 
+ 
+Single Pole -To-Earth Fault Detection and L ocation on  the Tehran 
+Railway System  Using ICA and PSO  Trained Neural Network   
+ 
+Masoud Safari shaal ,  
+Amirkabir  University  Technology, Tehran , Iran 
+masoud.safarishaal66@ gmail.com ,  
+ 
+Abstract: In a railroad feeding system, detecting a location of pole to earth faults is important for 
+safe operation of the system. The goal  of this paper is to use a combination of the evolutionary  
+algorithm and neural networks to increase the accuracy of single pole -to-earth fault detection and 
+location on Tehran railroad power supply system. Accordingly, Imperialist Competitive Algorithm 
+(ICA) and Particle Swarm Optimization (PSO) are used to trai n the neural network for enhancing 
+learning process accuracy  and the convergence . Owing to the nonlinearity of system, the fault 
+detection is an ideal application for the proposed method where 600 Hz harmonic ripple method 
+is used in this paper for fa ult detection. The substations were simulated by considering various 
+situations in feeding the circuit, the transformer and the silicon rectifier has been developed by 
+typical Tehran metro parameters. Required data for the network learning the process have  been 
+gathered from simulation results. 600Hz components value will change with the change of the 
+location of single pole to earth fault. Therefore, 600Hz components are used as inputs of the neural 
+network when fault location is the output of the network system. The simulation results show  that 
+the fault location can be accurately predicted in proposed methods.  
+ 
+Keyword:  Single pole-to-pole fault, Tehran Railway, ICA, PSO, Artificial Neural Network.  
+1. INTRODUCTION  
+Nowadays, Transports on rail are increasing and major railroad infrastructure investments are 
+expected. In a railroad feeding system,  detecting a locati on of pole -earth faults is important for 
+safe operation of the system. There are various types of fault sin railroad power traction sy stems, 
+such as pole to pole ( PP) faults, single pole to earth (PE) fault and pole to earth to pole (PEP) fault. 
+Between these, PE maybe is not as much as other dangerous but detection and location of it can 
+enable early preventive measures before the faul ts escalate into more dangerous poles to pole earth 
+faults [1].  the fault current may be less than a normal train load, also many factors such as changing 
+in train position, track nonlinear impedance, nonlinear s ource voltage of the substation rectifier 
+and etc , so these faults are difficult to detect . makes it difficult to get the fault location simply by 
+calculations. Owing to the nonlinearity of the system, the fault detections, an ideal application for 
+the proposed method where the 600 Hz harmonic ri pple method is used in this paper for fault 
+detection [2]. To deal with these nonlinear situations, in this paper two modern neural network -
+based  methods are explored. Todays,  the idea of combining ANNs  and evolutionary algorithms 
+has received a lot of  attention [3 -8]. ICA is inspired by the historical pattern of competition among 
+the countries of imperialism . In fact, this algorithm is an open door to the world of mathematics 
+with a completely human perspective . The algorithm initially starts from several  countries ; In fact, 
+these countries are possible answers to the algorithm . [9-11, 15-16]. Also , Particle Swarm 
+Optimization (PSO) is a possible optimization . An evolutionary and simulated algorithm that is 
+inferred from the behavior of humans and animals . A special feature of  this algorithm (PSO) is 
+that it executes real numbers directly in a continuous space and also, unlike other algorithms, does 
+not guarantee the existence of a definite answer . PSO requires a small number of parameters to be 
+set, which is easy to implement and has certain memory characteristics . [12], which have been 
+inspired by nature  and implemented in the differe nt optimization problem [13] . In this paper, th e 
+simulation system is a typical simulation of the Tehran railway system. In fact, the electrical 
+characteristics by simulation are similar to the basic characteristics of the actual system.  600Hz 
+components v alue will change with the change of the locat ion of single pole to earth fault. 
+Therefore, 600Hz components are used as inputs of a neural network when fault location is the 
+output of the network system. After this introductory section 1, the rest of this paper is organized 
+as follows: In section 2, modeling of the railroad, components are presented. In section 3,600Hh 
+components are described. Neural networks trained by evolutionary algorithms which have  been 
+used in this paper, are presented in section 4.  Also, i n section 5, simulation results are given an d 
+discussed. These results demonstrate the validity of the method. Also, in this section the 
+performance of the ICA algorithm  is compa red with the p erformance of the PSO  and conventional 
+neural network method. Finally, in section 6  the conclusions are presented . 
+ 
+2. MODELING OF RAILWAY  COMPONENT  
+2.1 Feeding  System  
+The electric power generated by the power station is carried to electric railroad substations by 
+transmission line. Traction power suppl y is one of the most important parts of the tr ansporting 
+structure. The scheme used in Tehran railroad electrification systems is to supply traction systems 
+directly using the fundamental frequency main power, ie, 60 Hz [1 4]. The transmission or sub -
+transm ission voltages are then directly transformed by a power transformer (63k/20k) to rectifier 
+voltage. The output voltage of the rectifier to the traction voltage is 750v  [14].  
+ 
+2.2 12-Pulse  Rectifier : 
+Electric power must  be converted by power converters so that it can flow between the public grid 
+and the  railroad grid. Because a three -phase power supply is used in Tehran Railway,  a rectifier 
+must be used to provide the required direct current.  A 12 -pulse system which is two sets of6 -pulse 
+rectifier used in order to reduce the harmonics.  In fact, this rectifier  gives  unregulated  voltage.  
+This voltage contains AC component of 600Hz and its harmonics.  [2], in this paper this component 
+used for fault detection.  
+ 
+2.3 Transformer  
+There are a supply transformer for each rectifier which provides the medium  voltage for them 
+needed  based on its load. Therefore , transformer have two secondary windings, connected in the 
+delta and the star at 600 Vac.  The transformer is modeled simply with leakage reactance and 
+winding resistance. Also, in T ehran's electrified railroad traction power supply system, the vector 
+group is Yy0d1 [1 4]. The  circuit of Fig.1 shows a parallel connected 12 -pulse rectifier and its 
+supply transformer.  
+ 
+ 
+Fig.1. Tarsnsformer and  12 pulse rectifire  
+ 
+2.4 Tracti on  
+Traction system  plays a very important role in railroad installations. Today, elec tric traction 
+systems have been developed for both DC and AC power supply in railways . In Tehran railroad a 
+NO.ZQ -132 DC motor is used as traction in this work the parameters of this motor have been used 
+for simulation [1 4]. 
+ 
+2.5 Total  model  
+Fig.2 shows the total model of rai lroad system, as shown in it, bleed resistors of 100 and 200 Ohm 
+are used both to define normal voltage with respect to earth, this resistor used to set the positive 
+and negative rail normal voltage. X is the di stance between the substation and fault locat ion, also 
+train location is assumed to be constant, in any simulation the value of X has been changed and 
+the 600 Hz voltage amplitude is determined from this simulation result. R1 is the fault resistance 
+that a ssumed to be 100 Ohm [1].  
+
+ 
+Fig.2. Total mode l of fault an d railway  
+ 
+3. 600H Z COMPONENTS CIRCUIT  
+By using this circuit Vp, Vn, Ip and In can  be measured. Accordingly, when other parameters such 
+as train location Lt, train impedanc Zt and rail impedance Zrl ar e known the fault location can by 
+calculated  as following equation  [1]. 
+ 
+( ) ( ) 2
+()p d p n d n t n t rl n
+f
+rl p nR I I R I I Z I L Z ILZ I I    
+ 
+  
+ 
+(1) 
+2
+()p n t n t rl n
+rl p nV V Z I L Z I
+Z I I  
+  
+  
+                (2) 
+However, the equations are different when Lt<Lf . Obtain ing of the fault location  by calculations , 
+is hard because of  many factors such as changing in train po sition, track nonlinear impedance, 
+nonlinear source voltage of the substation rectifier etc[1] . To deal with these nonlinear situations, 
+in th is paper two modern neural network -based  method are explored. Fig. 3 shows 600Hz 
+component circuit with train position beyod the fault location  [1]. 
+
+ 
+Fig.3. 600Hz C omponent circuit with train position beyod the fault location.  
+ 
+4. NEURAL NETWORK TRAINED BY EVOLUTIONARY ALGORITHMS  
+Using traditional neural network design methods is no t very accurate. In this paper , we intend to 
+present a different method. In this method, we first use the ICA and PSO  to train neural networks, 
+then trained neural networks are used t o find the location  of the fault . 
+ 
+4.1 Imperialist  Competitive A lgorithm  
+The Imperialist Competitive Algorithm (ICA) is one of the newest evolutionary optimization 
+algorithms. This algorithm, as its name implies, is based on modeling the socio -political process 
+of the colonial phenomenon. Therefore, it is a new algorithm and can compete with other 
+evolutionary algorithms such as genetic algorithms  and ant colony algorithms, etc. In terms of 
+applicati on, it has been used to solve many problems in the field of optimization, including in 
+electrical engineering, computer, industry, mechanics, economics, management, etc. The reason 
+for the high popularity of this algorithm, along with its high efficiency, is mostly due to its 
+innovative, new and attractive aspect for optimiza tion experts . Fig. 4 shows the flowchart of the 
+ICA. In this pape r, a population of 30 countries consisting of 3 empires  and 27 colonies are used . 
+ 
+
+Start
+ Revolve some 
+coloniesAssimilate coloniesInitialize empires
+Is there a colony in an empire which 
+has lower cost than of the imperialistImperialistic Competition
+Compute the total 
+cost of all empires
+Exchange the position of 
+that imperialist and colonyIs there an empire 
+with no colonies
+Eliminate this empire
+Unite Similar Empires
+Stop condition 
+satisfied
+ENDYes
+NoYes
+YesNo
+No 
+Fig.4. Flowchart of the Imperialist Competitive Algorithm  
+ 
+4.2  Particle S warm Optimization  
+The idea of the Particle Swarm Optimization algorithm was first proposed by Kennedy and 
+Eberhart  [12]. PSO is a nature -inspired, iterative evolutionary computational algorithm. The 
+source of inspiration for this algori thm is the social behavior of animals, such as the collective 
+movement of birds and fish. As the name implies, it is a particle -based optimization method. The 
+basis for the development of the PSO algorithm is that the possible solutions to an optimization 
+problem are considered as birds without volume and qualitative properties, which are referred to 
+as particles, these birds fly in an n -dimensional space and their path in space . They change the 
+search based on their past experiences and those of their neigh bors. The PSO algorithm has a 
+simple structure and at the same time has acceptable performance. Therefore, due to the capability 
+of the PSO algorithm in finding the optimal global solution with a very high probability and high 
+convergence rate, this algori thm has been used to train neural networks . Fig. 5  shows the flowchart 
+of the PSO.  In this case of study, 200  particles and 400 iterations were employed.  
+ 
+InitializeSwrm
+Calculate Velocities
+Calculate New Positions 
+Evaluate Swarm 
+Update memory of each particle
+Optimal or good solution found?
+Stop: giving gBest, optimai solution.YesNo 
+Fig.5. Flow chart for Particle Swarm optimization  
+ 
+5. RESULTS  
+In this sectio n two proposed estimator systems, compared with conventional feed forward neural 
+network and with each other Fig. 6 (a) and (b) show ICA trained NN output vs. real output for 
+train data and test data respectively, also Fig. 7 (a) and (b) sho w PSO trained n eural network output 
+vs. real output for training and test data. Accordingly, Fig. 8 (a) and (b) show output vs. real output 
+for training and test data. In these figures the correlation of real output with proposed method 
+output is displayed . In addition t o correlation rate, in order to compare the accuracy of proposed 
+methods, it is very important to select a reasonable metric to evaluate the results. Hence, the 
+following Mean Absolute Percentage Error (MAPE) and Root Mean Square Error (RMSE ) are 
+used here  for after -the-fact error analysis:  
+11*100Ntf
+i txx
+Nx
+
+
+ (6) 
+2
+11N
+tf
+ixxN  (7) 
+Where Xt is the actual load and Xf is the forecasted data. MAPE is a percentage of error while 
+RMSE is a number indicating the model bias.  MAPE, RMSE correl ation value for all mentioned 
+method measured for training and testing data as shown in Table. I.  As the results show, accuracy 
+of the model performance was acceptable in both proposed methods, although ICA NN's results 
+were slightly more ac curate.   
+ 
+Fig.6. ICA trained Neural Network output vs. real output for a) train data b) test data  
+ 
+ 
+
+ 
+Fig.7 . PSO trained Neural Network output vs. real output for a) train data b) test data  
+ 
+ 
+Fig.8 . Feed Forward Neural Network output vs. real output for a) train data b ) test data  
+ 
+ 
+
+Table. I . Comparison of proposed method  with conventional  Neural Network  
+  Training data   Testing Data  
+ MAPE  RMSE  Correlation  MAPE  RMSE  Correlation  
+ICA trained NN  0.0061  0.031  0.9885  0.0055  0.026  0.9927  
+PSO trained NN  0.0060  0.042  0.9840  
+ 0.0067  0.038  0.9883  
+Neural Network  0.0099  0.089  0.9679  0.0108  0.085  0.9718  
+ 
+ 
+6. CONCLUSION  
+A typical simulation of the Tehran railroad system is developed in MATLAB environment. Single 
+pole to earth fault detection using 600Hz ripple componen ts by three neu ral networks models, 
+namely ICA trained neural network, PSO trained neural network and conventional feed forward 
+neural network are presented. The result shows that detection can be improved by combination of 
+the mentioned evolutionary algor ithm by neural network. Also, the ICA trained the neural network 
+to give a better result than other methods.  
+REFERENCE  
+[1] R. Atkins ,  J. Allan . C.J. Goodman.   K. Payne . “Single pole -to-earth fault detection and location on 
+a fourth -rail DC railway syste m”. Electric Power Applications, IEE Proceedings . Vol. 15,No. 4, 
+2004,  477-486. 
+[2]  J. Arrillaga, “Power System Harmonics ”. Wiley,  1985.  
+[3] M.Sarvi, M.Safari, “Fuzzy, ANFIS and ICA trained neural network modelling of Ni -Cd batteries 
+using experimental data” - Journal of World Applied Programming ., V.8  (2013). p.93 -100 
+[4] P. Tang, Z. Xi. “The Research on BP Neural Network Model Based on Guara nteed Convergen ce 
+Particle Swarm Optimization ”. Second  International Symposium on Intelligent Information 
+Technol ogy Application,  Vol. 2, Dec 2008 , pp. 13-16. 
+[5] M.Safari, M.Sarvi, “Optimal load sharing strategy for a wind/diesel/battery hybrid power system 
+based on imperialist competitive neural network algorithm” - IET Renewable Power Generation , 
+V.8 (2014) p..  739 – 749  
+[6] S Nazari -Shirkouhi,  H. Eivazy, R. Ghodsi, K. Rezaie,  E. Atashpaz -Gargari, “Solving the Integrated 
+Product M ix-Outsourcing Problem by a Novel Meta -Heuristic Algorithm: Imperialist Competitive 
+Algorithm ”. Expert Systems with Applications , Vol. 37, No. 12 2010, pp. 7615 –26. 
+[7]  M.Safari, M.Sarvi, “Estimation the Performance of a PEM Fuel Cell System a t Different Operating 
+Conditions using Neuro Fuzzy (ANFIS) -TI Journals” - World Applied Programming,  V.3 (2013) 
+p.355 -360.   
+[8] E. Atashpaz -Gargari,  F. Hashemzadeh , R. Rajabioun, C. Lucas, “ Colonial Competitive Algorithm, 
+a novel approach for PID controller design in MIMO di stillation colu mn process ”, International 
+Journal of Intelligent Computing and Cybernetics , Vol.1,  2008, pp.  337–55.  
+[9] M. Yousefi , N.  Darus , H. Mohammadi. “An imperialist competitive algorithm  for optimal design 
+of plate -fin heat  exchangers ”. International  Journal of Hea t and Mass Transfer . Vol. 55, No. 11, 
+May 2012,pp.  3178 -85. 
+[10] A. Kaveh , S. Talatahari. “Optimum design of skeletal structures using imperialist competitive  
+algorithm ”. Computers & Structures , Vol. 88,No.21 2010, pp. 1220 –9. 
+[11] H. Moradi , M. Zandieh . “An imperiali st competitive algorithm for a mixed -model assembly line  
+sequencing  problem ”. Journal of Manufacturing Systems . Vol. 32 , No.1  2013 , pp. 46–54. 
+[12] J. Kennedy and R.C. Eberhart, Particle Swarm Optimization, Proceedings of the IEEE 
+International Conference on N eural Networks , Vol.4, 1995, pp. 1942 -1948 . 
+[13] Khazeiynasab, S. R., & Qi, J. (2021). Generator Parameter Calibration by Adaptive Approximate 
+Bayesian Computation with Sequential Monte Carlo Sampler.  IEEE Transactions on Smart Gri d.  
+[14] http://tehran -metro.com/  
+[15] M.Safari, M.Sarvi “New Hybrid Maximum Power Point Tracking Methods for Fuel Cell using 
+Artificial Intelligent”  2021  
+[16] M.Saf ari, M.Sarvi, “A Fuzzy Model for Ni -Cd Batteries” International Journal of Artificial 
+Intelligence, V.2 (2013).p.81 -89 
+ 

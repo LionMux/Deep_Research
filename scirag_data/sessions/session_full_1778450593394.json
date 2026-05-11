@@ -1,0 +1,73 @@
+{
+  "session_id": "full_1778450593394",
+  "query": "CNN fault location transmission line",
+  "created_at": 1778450593.3942616,
+  "evidence_papers": [
+    "demo1"
+  ],
+  "evidence_paper_source": [
+    "local_index"
+  ],
+  "selected_doc_ids": [
+    "demo1"
+  ],
+  "selected_chunk_ids": [],
+  "coverage_report": {
+    "overall": {
+      "total_papers_selected": 1,
+      "clusters": 1,
+      "diversity_metrics": {
+        "tag_counts": {
+          "T": 1,
+          "E": 0,
+          "M": 0,
+          "A": 0
+        }
+      }
+    },
+    "clusters": [
+      {
+        "cluster_id": "cluster_T",
+        "cluster_label": "PrimaryTag:T",
+        "paper_ids": [
+          "demo1"
+        ],
+        "budget_alloc": 1,
+        "coverage_notes": [
+          "Selected 1 for tag T"
+        ],
+        "gaps_estimate": []
+      }
+    ]
+  },
+  "config_snapshot": {
+    "target_papers": 3,
+    "coverage_mode": "balanced",
+    "style": "engineer",
+    "max_sections": 1,
+    "verification_level": "basic",
+    "freshness": "local_only",
+    "session_store": "in_memory",
+    "random_seed": null,
+    "sufficiency_policy": {
+      "mode": "hybrid_v2",
+      "thresholds": {
+        "min_verified_facts": 8,
+        "min_coverage_sentences": 0.55,
+        "max_gaps": 2,
+        "min_sentence_pool": 12,
+        "min_coverage_proxy": 0.55,
+        "consistency_required_iters": 1,
+        "llm_judge_accept_if": "enough"
+      },
+      "score_weights": {
+        "w_verified_ratio": 0.45,
+        "w_with_gaps": 0.35,
+        "w_coverage_proxy": 0.2
+      }
+    },
+    "evidence_version": "61ea51136a1eb39db39c889c9c53ebd21e5ce9e78721a6c2c40f8e16b782a879"
+  },
+  "synthesis": {},
+  "last_sufficiency": {}
+}

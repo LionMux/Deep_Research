@@ -1,0 +1,1765 @@
+1
+FT -CNN: Algorithm-Based Fault Tolerance for
+Convolutional Neural Networks
+Kai Zhao, Sheng Di, Senior, IEEE, Sihuan Li, Xin Liang, Yujia Zhai, Jieyang Chen, Kaiming Ouyang,
+Franck Cappello, Fellow, IEEE , and Zizhong Chen, Senior, IEEE
+Abstract —Convolutional neural networks (CNNs) are becoming more and more important for solving challenging and critical problems
+in many ﬁelds. CNN inference applications have been deployed in safety-critical systems, which may suffer from soft errors caused by
+high-energy particles, high temperature, or abnormal voltage. Of critical importance is ensuring the stability of the CNN inference
+process against soft errors. Traditional fault tolerance methods are not suitable for CNN inference because error-correcting code is
+unable to protect computational components, instruction duplication techniques incur high overhead, and existing algorithm-based fault
+tolerance (ABFT) techniques cannot protect all convolution implementations. In this paper, we focus on how to protect the CNN
+inference process against soft errors as efﬁciently as possible, with the following three contributions. (1) We propose several systematic
+ABFT schemes based on checksum techniques and analyze their fault protection ability and runtime thoroughly. Unlike traditional
+ABFT based on matrix-matrix multiplication, our schemes support any convolution implementations. (2) We design a novel workﬂow
+integrating all the proposed schemes to obtain a high detection/correction ability with limited total runtime overhead. (3) We perform our
+evaluation using ImageNet with well-known CNN models including AlexNet, VGG-19, ResNet-18, and YOLOv2. Experimental results
+demonstrate that our implementation can handle soft errors with very limited runtime overhead (4% 8% in both error-free and
+error-injected situations).
+Index Terms —Algorithm-Based Fault Tolerance, Deep Learning, Silent Data Corruption, Reliability, High-Performance Computing
+F
+1 I NTRODUCTION
+Deep learning using convolutional neural networks (CNNs)
+is becoming the key state-of-the-art technique in science
+and technology ﬁelds such as image classiﬁcation [1], [2],
+[3], object detection [4], natural language processing [5],
+medical image analysis [6], and drug design [7]. More and
+more scientiﬁc research (such as cosmological simulation
+and materials analysis) also is addressing the great potential
+of leveraging CNN techniques to analyze extremely large
+amounts of data in a supercomputer environment, achieving
+unprecedented discoveries in their domains [8].
+The reliability of the CNN inference is becoming a
+critical concern [9] because CNN inference applications are
+being widely utilized in different scenarios, including high-
+performance scientiﬁc simulations and safety-critical sys-
+tems [10], [11] such as aerospace and autonomous vehicles.
+CNN inference applications usually run for a long time or
+continuously to process many inference tasks. For example,
+the inference engine in autonomous vehicles is running
+continuously to predict road conditions. As a result, even
+a single inference task for one input ﬁnishes in seconds, the
+reliability of CNN inference is still critically important given
+the long execution time of the inference applications.
+Kai Zhao, Sihuan Li, Yujia Zhai,and Zizhong Chen are with the Depart-
+ment of Computer Science and Engineering at University of California,
+Riverside, CA 92521.
+Sheng Di and Franck Cappello are with the Mathematics and Computer
+Science division at Argonne National Laboratory, Lemont, IL 60439.
+Xin Liang and Jieyang Chen are with the Computer Science and Mathe-
+matics Division at Oak Ridge National Laboratory, Oak Ridge, TN 37831.In the domain of CNN inference, machine learning ap-
+plications could be very error prone because of two reasons.
+On the one hand, recent literature indicates that soft errors
+are inevitable in modern systems, from edge computing
+devices to supercomputers [12], [13], because of multiple
+factors [14] such as high-energy cosmic radiation [15], aging,
+and wear of devices [16]. On the other hand, CNN inference
+applications often call for power-efﬁcient and cost-efﬁcient
+machine learning accelerators, which [17], [18] may adopt
+overclocking with voltage underscaling, incurring more soft
+errors than common hardware incurs.
+Soft errors may cause serious consequences to CNN
+inference systems. Recent studies [19], [20], [21] indicate
+that resilient convolutional neural networks are essential
+for guaranteeing the correctness of inference applications.
+Researchers [19] demonstrate that a single bit ﬂip happened
+during CNN image classiﬁcation could result in as much as
+40% and 70% SDC rate in datapath and memory, respec-
+tively. Such high SDC rates would downgrade the CNN
+prediction accuracy dramatically. Furthermore, the neutron
+beam test [20] shows that when running YOLO [4] classiﬁ-
+cation, the Failure In Time (FIT) caused by SDCs could be
+as much as 38 for Nvidia K40 and 96 for Nvidia Tegra X1,
+which fail to meet the ISO 26262 standard for functional
+safety of road vehicles [22].
+Existing resilient solutions are insufﬁcient for protecting
+CNN inference applications against these soft errors. Error-
+correcting code (ECC), for example, suffers from memory
+area cost and relatively high latency and power consump-
+tion. According to [23], ECC with chip-kill applied to all
+data, compared with no ECC protection, has an average of
+40% overhead in memory energy, 20% overhead in systemarXiv:2003.12203v4  [cs.DC]  7 Sep 2020
+2
+energy and 20% overhead in performance for computation-
+bounded applications. Moreover, ECC cannot handle mul-
+tiple bit ﬂips or computational errors. Techniques based
+on instruction duplication (ID) [24] incur high overhead
+and require both application-speciﬁc and hardware-speciﬁc
+optimization; and optimizing and deploying ID techniques
+on all CNN accelerators is difﬁcult.
+Considering all the drawbacks and limitations of ECC
+and ID, algorithm-based fault tolerance (ABFT) [25] is an
+attractive solution to realize resilient CNN. It has much
+lower overhead than other techniques have; and it is archi-
+tecture independent, meaning that it supports any hardware
+accelerator. The idea of ABFT is to detect and/or correct soft
+errors based on the known invariants that the algorithm
+has. Over the past thirty years, ABFT schemes have been
+successful in detecting errors for matrix operations [26], [27],
+[28], [29], [30], [31], iterative methods [32], [33], [34], [35],
+data transformation kernels [36] and sorting algorithm [37].
+However, the existing ABFT schemes for matrix operations
+focus mainly on large and square matrices. Moreover, they
+incur more than 50% overhead when applied for CNN soft
+error protection (shown by our experiments in Section 6.3 ).
+In this paper, we propose a strategy comprising a series
+of ABFT schemes for protecting the CNN inference stage
+against soft errors. We focus on the convolutional layers
+in CNN because they consume the major portion of the
+computation time [38], [39], [40], [41].
+The main contributions of this paper are summarized as
+follows.
+We design several ABFT schemes that can be applied
+to any convolution implementation on any hardware.
+They can detect and correct errors at runtime. We
+provide an in-depth analysis of the ABFT schemes in
+terms of fault protection ability and runtime.
+We design a multischeme workﬂow for soft error pro-
+tection with layerwise optimization to obtain a high
+detection/correction ability with limited runtime over-
+head. Additionally, our solution can protect the bias
+operation, grouped convolution, and back propagation.
+We implement an efﬁcient soft error detection library
+for CNN, called FT-Caffe , and evaluate FT-Caffe on Im-
+ageNet [42] using four popular CNN models: Alexnet
+[1], VGG-19 [2], ResNet-18 [3], and YOLOv2 [4]. Exper-
+imental results on the Bebop supercomputer [43] using
+up to 128 nodes demonstrate that FT-Caffe can keep the
+correctness of the inferences with 4% 8% overhead in
+both error-free and erroneous cases.
+In the rest of the paper, we ﬁrst introduce background
+about convolutional layers and existing ABFT techniques
+applicable to matrix-matrix multiplication (MM)-based con-
+volution implementation. In Section 3, we propose four
+novel ABFT schemes that can be applied to any convolution
+implementations. In Section 4, we analyze the fault protec-
+tion ability and runtime of the four schemes and propose
+an efﬁcient multischeme workﬂow integrating all the four
+schemes. In Section 5, we discuss how to support bias,
+grouped convolution, and back propagation. In Section 6,
+we evaluate our solutions for both error-free case and erro-
+neous case. In Section 7, we discuss related work on fault
+tolerance in convolutional neural networks. We present our
+concluding remarks in Section 8.2 B ACKGROUND
+This section introduces some high-level ideas of convolu-
+tional layers and the existing ABFT techniques to MM-based
+convolution algorithms. The notations and symbols used in
+this paper are summarized in Table 1.
+2.1 Deﬁnition of Convolutional Layer
+The convolutional layer can be represented as the following
+convolution operation.
+O[n][m][x][y] =B[m]+
+Ch 1P
+k=0R 1P
+i=0R 1P
+j=0D[n][k][Ux+i][Uy+j]W[m][k][i][j]
+0n<N; 0m<M; 0x;y<E;E =H R+U
+U(1)
+The convolution operation involves two signiﬁcant in-
+puts: the feature map (fmap) D,D2RNChHH, and
+the convolutional kernels W,W2RMChRR. Note that
+all the matrices and vectors in this paper are highlighted
+in bold in order to differentiate from the scalar numbers,
+according to the naming convention. The bias, denoted as
+B, is applied to the output after convolution, and the ﬁnal
+result is denoted as O,O2RNMEE. Since the bias
+operation is independent of the convolution computation,
+in the rest of this section we describe only the protection for
+convolution computation. In Section 5.1, we will discuss the
+protection for bias.
+TABLE 1
+Notations and Symbols Used in This Paper
+Notation Description
+D Feature map, dimension is 4D
+W Kernels, also called ﬁlters, dimension is 4D
+O Output, dimension is 4D
+B Bias, dimension is 1D
+C Checksums
+S Block summations of O, corresponding to checksums
+
+ Convolution operation
+N First dimension of DandO
+M First dimension of Wand second dimension of O
+Ch Second dimension of DandW, also called channels
+H Third and fourth dimension of D
+R Third and fourth dimension of W
+E Third and fourth dimension of O
+U Stride size
+2.2 Implementation of Convolutional Layer
+Convolution can be implemented efﬁciently in several
+ways [44]. The ﬁrst option is MM-based convolution [45],
+which reshapes the kernel and feature map to two tempo-
+rary matrices and then applies matrix-matrix multiplication
+(MM) on them. Another way to implement convolution
+is called direct convolution , which performs the convolu-
+tion operation directly. It is widely used in AI accelerators
+including Eyeriss [39], DianNao [46] and NVIDIA Deep
+Learning Accelerator [47]. Fast Fourier transform–based
+convolution [48] leverages FFT to compute the convolution.
+It is particularly suitable for the relatively large feature
+map and kernel. However, it is inferior to the Winograd
+convolution [44] when the sizes of the feature map and
+kernel are relatively small.
+3
+Modern CNN frameworks and accelerators generally
+automatically choose the best implementations of convo-
+lution based on hardware resources and model structure,
+because various implementations have different constraints
+on memory, architecture, and CNN model.
+2.3 ABFT for Matrix-Matrix Multiplication
+Traditional ABFT designed for matrix-matrix multiplication
+can be applied to the MM calculation of the MM-based
+convolution [20], but it has at least three limitations. (1)
+It supports only MM-based convolution implementation,
+which is not always the best-ﬁt implementation selected
+by the CNN framework and accelerator. (2) It incurs high
+overhead (more than 50%, as shown in Section 6.3), due to
+the small and irregular shape of the matrices used by MM-
+based convolution. (3) Moreover, it cannot cover the reor-
+ganization operations of feature before the MM calculation.
+Therefore, new ABFT schemes are needed in order to protect
+the convolutional layer more effectively.
+3 N OVEL ABFT S CHEMES FOR CONVOLUTION
+In this section, we present four novel ABFT schemes, each
+supporting any convolution implementation and being able
+to protect the whole convolution process. In Section 4, we
+propose a multischeme workﬂow using all the schemes in
+different stages to maximize the soft error protection ability
+with minimized performance overhead.
+3.1 Preliminary Analysis – Convolution
+For clear description, we interpret convolution at the block
+level. Speciﬁcally, in Equation (1), D,W, and Oare all 4D
+matrices. They can be represented as being composed of
+multiple blocks as shown in Figure 1. For any nandm(0
+n < N; 0m < M ),Dn,Wm, and Onmare blocks. The
+dimension of Dn,Wm, and OnmareChHH,ChRR
+andEE, respectively. The notation 
+is used to represent
+the convolution computation between blocks DnandWm.
+The convolution operation deﬁned by Equation (1) can be
+simpliﬁed at the block level as follows.
+Onm=Dn
+Wm
+0n<N; 0m<M(2)
+O11 
+O21 
+…
+On1O12 
+O22 
+…
+On2…
+…
+…
+…O1m
+O2m
+…
+Onm 
+CO1
+CO3
+CO2
+CO4
+CO5
+CO7CO6D1
+D2
+…
+Dn
+Cd1
+Cd2W1W2…WmCw1Cw2
+Input & output Checksum Level 1
+O1mLevel 2
+Fig. 1. Interpretation of Convolution at the Block LevelEquation (2) can be interpreted by using the blue part
+in Figure 1. Since each of the 3D substructures of DandW
+is treated as a block, DandWcan be thought of as two
+1Dvectors of blocks. At the block level, the convolution
+operation is similar to matrix-matrix multiplication. The
+element (i;j)ofOis calculated by using the ith element
+ofDand thejth element of W. As illustrated in Figure 1,
+the elements involved in the convolutional layers can be
+split into two levels, which are covered by our protection
+solution, respectively.
+We can derive that the convolution operation (denoted
+by
+) has a distributive property as follows.
+D1
+W1+D2
+W1=PCh 1
+k=0PR 1
+i=0PR 1
+j=0D1[k][Ux+i][Uy+j]W1[k][i][j]
++PCh 1
+k=0PR 1
+i=0PR 1
+j=0D2[k][Ux+i][Uy+j]W1[k][i][j]
+=PCh 1
+k=0PR 1
+i=0PR 1
+j=0(D1+D2)[k][Ux+i][Uy+j]W1[k][i][j]
+= (D1+D2)
+W1
+Similarly, we can get the following equation.
+D1
+W1+D1
+W2=D1
+(W1+W2) (3)
+The distributive property, Formula (3), is the key to proving
+the equivalence between the sum of the output and the
+output checksum. This property will be used later to prove
+the correctness of our design.
+3.2 Preliminary Analysis – CNN Checksums
+In general, we compute checksums for DandWand then
+use them to derive the checksums for O. Soft errors can be
+detected and corrected by comparing Owith its checksums.
+We introduce all the checksums (as shown in Table 2 and
+as yellow blocks in Figure 1) that are necessary for our ABFT
+schemes.
+TABLE 2
+Checksums Used by Schemes
+SchemeChecksums Checksums
+ofDandW ofO
+Full Checksum (FC) Cd1,Cw1 Co1,Co2
+Row Checksum (RC) Cd1,Cd2 Co1,Co3
+Column Checksum (ClC) Cw1,Cw2 Co2,Co4
+Checksum-of-Checksum (CoC) Cd1,Cw1,Cd2,Cw2Co5,Co6,Co7
+CoC Detection Only (CoC-D) Cd1,Cw1,Cd2,Cw2 Co5
+We deﬁne the checksums of DandWas follows.
+Cd1=PN 1
+n=0Dn
+Cd2=PN 1
+n=0nDn
+Cw1=PM 1
+m=0Wm
+Cw2=PM 1
+m=0mWm(4)
+The four checksums (denoted as input checksums) can
+be treated as four blocks of Dand W. The checksums
+ofO(denoted as output checksums) are deﬁned as the
+convolution result of input checksums and/or inputs.
+Co1=Cd1
+W
+Co2=D
+Cw1
+Co3=Cd2
+W
+Co4=D
+Cw2
+Co5=Cd1
+Cw1
+Co6=Cd1
+Cw2
+Co7=Cd2
+Cw1(5)
+4
+The output Ois represented in the form of blocks (i.e.,
+Level 1 in Figure 1). Elements inside the same block are
+independent with respect to checksums ( Level 2 in Figure
+1). That is, we perform the checksum comparison indepen-
+dently for each element across blocks. Therefore, multiple
+soft errors in the same block can be detected and corrected
+independently.
+In what follows, we describe the four schemes we
+proposed, each involving one or more input and output
+checksums. The required checksums used by each scheme
+are summarized in Table 2.
+3.3 Full Checksum Scheme (FC)
+The ﬁrst scheme we designed is called full checksum scheme ,
+or FC, because it is based on checksums from both Dand
+W, as shown in Figure 1 and Table 2.
+Cd1andCw1are calculated before the convolution op-
+eration, so any memory error striking DorWduring the
+convolution would not affect Cd1orCw1. As for the output
+checksums, we can get the following equations by applying
+the distributive property of 
+.
+Co1[m] =(N 1P
+n=0Dn)
+Wm=N 1P
+n=0(Dn
+Wm) =N 1P
+n=0Onm
+Co2[n]=Dn
+(M 1P
+m=0Wm) =M 1P
+m=0(Dn
+Wm) =M 1P
+m=0Onm
+These equations show the equality between the sum of
+output and the output checksums. Let So1andSo2be the
+summation of the output, where So1[m] =PN 1
+n=0Onm,
+So2[n] =PM 1
+m=0Onm. We can compare Co1,Co2with So1,
+So2to detect, locate, and correct soft errors if they exist.
+3.4 Row Checksum Scheme (RC)
+Compared with the full checksum scheme, the second ABFT
+scheme we designed involves only the row checksums of
+output O, so we call it row checksum scheme .
+The row checksums used in this scheme are Co1and
+Co3.Co3is computed from convolution operation between
+Cd2andW, and the related output summation is deﬁned by
+So3[m] =PN 1
+n=0nOnm.
+For the detection of soft errors, we need to compare Co1
+with So1. If they are not equal to each other at location j, the
+error can be located by i=Co3[j] So3[j]
+Co1[j] So1[j]andj, and it can be
+corrected by adding Co1[j] So1[j]to the block (i;j).
+3.5 Column Checksum Scheme (ClC)
+The third scheme we proposed is called column checksum
+scheme because it involves only the column checksums of
+output O. The column checksums used in this scheme are
+Co2and Co4.Co4is deﬁned by performing convolution
+operation between Dand Cw2, and the related output
+summation is deﬁned as So4[n] =PM 1
+m=0mOnm. To detect
+soft errors, we compare Co2with So2ﬁrst. If they are not
+equal to each other at location i, the error can be located by
+iandj(=Co4[i] So4[i]
+Co2[i] So2[i]), and it can be recovered by adding
+Co2[i] So2[i]to the block (i;j).3.6 Checksum-of-Checksum Scheme (CoC/CoC-D)
+Unlike the three schemes that all need Dand/or Wto
+calculate output checksums, the last scheme we proposed
+involves neither DnorWbut only their checksums, so
+it is named checksum-of-checksum scheme (or CoC scheme
+for short). Speciﬁcally, Co5,Co6, andCo7are the output
+checksums we will use in this scheme. Similar to Co1, using
+the distributive property can get three equations between
+the output checksums and output as follows.
+Co5=XN 1
+n=0XM 1
+m=0Onm=So5
+Co6=XN 1
+n=0XM 1
+m=0mOnm=So6
+Co7=XN 1
+n=0XM 1
+m=0nOnm=So7
+So5;So6, andSo7are deﬁned as output summations
+corresponding to Co5;Co6;andCo7. Let O(i;j)be the
+corrupted output block, O0be the correct output, and let
+=O0
+ij Oijbe the difference. Using the output checksums,
+we can get the following.
+Co5 So5=XN 1
+n=0XM 1
+m=0O0
+nm Onm=
+Co6 So6=XN 1
+n=0XM 1
+m=0m(O0
+nm Onm) =j
+Co7 So7=XN 1
+n=0XM 1
+m=0n(O0
+nm Onm) =i
+The location i,jcan be obtained by i= (Co7 So7)=
+andj= (Co6 So6)=. Then the soft error can be ﬁxed by
+addingtoOij.
+If only soft error detection is required, we do not need
+to compute Co6and Co7, thus reducing the number of
+computations. Input checksums regarding Cd1,Cd2and
+Cw1,Cw2, however, are still required for soft error detection.
+We denote such a detection scheme by CoC-D .
+4 M ULTISCHEME WORKFLOW
+In this section, we ﬁrst discuss the fault protection abilities
+and runtime of the four schemes we proposed in Section
+3. Then, we propose a multischeme workﬂow, powered by
+calibrated arrangement of the four schemes and layerwise
+optimization.
+4.1 Analysis of Protection Ability for Convolution
+Checksum Schemes
+In this section, we analyze the fault protection ability of all
+the schemes.
+4.1.1 Fault Model
+The fault model for soft errors that we discuss in this paper
+includes transient faults in computational units and data
+corruption faults (both transient and persistent) in memory
+(including cache). In the following text, we use fault to rep-
+resent a malfunction event, and we denote its corresponding
+symptom as soft error .
+Soft error protection includes error detection and error
+correction. Error detection means that the scheme can detect
+5
+soft errors without knowing the exact location. Error correc-
+tion means that the scheme can locate the soft error locations
+and recover the incorrect result.
+Without loss of generality, in the following analysis we
+consider at most one fault per convolution. One convo-
+lutional neural network contains several or even tens of
+convolutional layers, and the total forward execution time
+of a CNN model is usually within seconds. Thus, we can
+reasonably assume that at most one fault may strike to one
+convolutional layer, considering the short executing time of
+a single layer. Multiple faults per convolution can also be
+detected by our schemes and recovered by recomputing the
+corrupted convolutional layer.
+4.1.2 Analysis of Soft Error in DandW
+One fault occurring during the convolution execution can
+result in multiple soft errors in WandD. The soft errors
+inWcan be detected by comparing the checksum of W
+with Cw1and corrected by reloading weights from the CNN
+model. The soft errors in Ddo not need correction because
+Dwill be discarded after convolution computation; the
+resulting errors in the output can be detected and corrected
+by the checksums of the output, as demonstrated below.
+4.1.3 Analysis of Soft Error in O
+One fault during the convolution execution can result in
+corruption of one block row or column of O. By deﬁnition,
+the rowiofOis computed by the ith block of DwithW.
+Thus, one fault in Dwould result in at most one corrupted
+row. The column jofOis computed by Dwith thejth
+block of W. Thus, one fault in Wwould result in at most one
+corrupted column. Moreover, the intermediate result will be
+reused only by the same row or column, such that one fault
+in the computational units would corrupt only values in the
+same row or column. Accordingly, in the following sections
+we discuss the soft error protection ability in the context of
+at most one corrupted row or column of O.
+4.1.4 Soft Error Protection Ability of CoC Scheme
+Figure 2 demonstrates the protection ability of the CoC
+scheme when soft errors strike the input or output data. As
+shown in Figure 2(a), multiple soft errors can be detected
+by using only Co5. A single soft error in Ocan be corrected
+by CoC using all checksums including Co5,Co6, and Co7,
+as shown in Figure 2 (b). However, CoC cannot correct soft
+errors across multiple blocks in O.
+Figure 3 illustrates the protection ability of the CoC
+scheme when soft errors happen inside the checksums.
+Such soft errors can cause inconsistency among the output
+checksums of CoC, which can be used for error detection.
+For example, in Figure 3(a), Cd1is corrupted, leading to
+corrupted Co5and Co6with correct Co7. We can detect
+this abnormal pattern when comparing checksums with the
+summation of Oto detect the input checksum corruption.
+The input D,W, and output Oare clean and without soft
+errors since fault frequency is at most once per convolution.
+Thus, we can safely discard all the checksums and ﬁnish this
+convolution computation.
+O11 
+O21 
+…
+On1O12 
+O22 
+…
+On2…
+…
+…
+…O1m
+O2m
+…
+Onm 
+CO5
+CO7CO6D1
+D2
+…
+Dn
+Cd1
+Cd2W1W2…WmCw1Cw2
+O11 
+O21 
+…
+On1O12 
+O22 
+…
+On2…
+…
+…
+…O1m
+O2m
+…
+Onm 
+CO5D1
+D2
+…
+Dn
+Cd1W1W2…WmCw1
+(a)  CoC Error Detection (b)  CoC Error Detection Input & output Checksum Data with soft error Checksum in use Fig. 2. Soft Error Protection Ability of CoC Scheme (Soft error happens
+in inputs and outputs)
+CO5
+CO7CO6 Cd1
+Cd2Cw1Cw2
+CO5
+CO7CO6 Cd1
+Cd2Cw1Cw2
+CO5
+CO7CO6 Cd1
+Cd2Cw1Cw2
+CO5
+CO7CO6 Cd1
+Cd2Cw1Cw2(a) SDC in C d1 (b) SDC in C w1
+(c) SDC in C d2 (d) SDC in C w2
+Fig. 3. Soft Error Protection Ability of CoC Scheme (Soft error happens
+in checksums)
+4.1.5 Soft Error Protection Ability of Row Checksum
+Scheme and Column Checksum Scheme
+Since the row checksum scheme and column checksum
+scheme are symmetric with each other, we discuss them
+together in this section. As shown in Figure 4(a), the row
+checksum scheme can detect and correct soft errors if they
+are in the same row. If the soft errors are in the same column,
+as shown in Figure 4(b), the row checksum scheme can only
+detect soft errors; it has no correction ability. The column
+checksum scheme, on the contrary, can detect and correct
+errors located in the same column but fail to correct those
+appearing in the same row.
+O11 
+O21 
+…
+On1O12 
+O22 
+…
+On2…
+…
+…O1m
+O2m
+…
+Onm 
+CO1
+CO3D1
+D2
+…
+Dn
+Cd1
+Cd2W1W2…Wm
+(a) Row Checksum Scheme
+O11 
+O21 
+…
+On1O12 
+O22 …
+…
+…
+…O1m
+O2m
+…
+Onm 
+CO4D1
+D2
+…
+DnW1W2…WmCw1Cw2
+On2
+CO2 (b) Column Checksum Scheme
+Fig. 4. Soft Error Protection Ability of Row/Column Checksum Schemes
+4.1.6 Soft Error Protection Ability of Full Checksum
+Scheme
+The full checksum scheme has the highest ability to correct
+soft errors. The scheme uses both the row checksum Co1
+6
+and column checksum Co2so that it can correct soft errors in
+both directions, as shown in Figure 5(a)(b). If soft errors exist
+inCo1(Figure 5(d)), however, Co1can no longer be used to
+locate or correct soft errors. To support error correction in
+this situation, we use checksum Co5andCo6from the CoC
+scheme to locate the corrupted column, and we then use Co2
+to correct the soft errors. If soft errors exist in Co2(Figure
+5(c)), Co5andCo7are used to locate the corrupted row, and
+Co1is used to correct the soft errors.
+CO1O11 
+O21 
+…O12 
+O22 
+…
+On2…
+…
+…O1m
+O2m
+…
+Onm D1
+D2
+…
+Dn
+Cd1W1W2…WmCw1CO2
+On1
+(a) Soft Error in the Same Row
+O11 
+O21 
+…
+On1O12 
+O22 …
+…
+…
+…O1m
+O2m
+…
+Onm D1
+D2
+…
+Dn
+Cd1W1W2…WmCw1
+CO1On2
+CO2 (b) Soft Error in the Same Column
+O11 
+O21 
+…
+On1O12 
+O22 
+…
+On2…
+…
+…O1m
+O2m
+…
+Onm 
+CO1D1
+D2
+…
+Dn
+Cd1W1W2…WmCw1CO2
+CO5
+CO7
+(c) Soft error in the Same Row
+(including Co2)
+O11 
+O21 
+…
+On1O12 
+O22 …
+…
+…
+…O1m
+O2m
+…
+Onm D1
+D2
+…
+Dn
+Cd1W1W2…WmCw1
+CO1On2
+CO2
+CO5CO6(d) Soft error in the Same Column
+(including Co1)
+Fig. 5. Soft Error Protection Ability of Full Checksum Scheme
+4.1.7 Conclusion
+In this section, we deﬁne our fault model and analyze the
+soft error protection ability of four schemes. We conclude
+that the CoC scheme has the lowest error correction ability
+and that the full checksum scheme has the best error correc-
+tion ability. The abilities of the row checksum scheme and
+column checksum scheme are higher than that of the CoC
+scheme but lower than that of the full checksum scheme.
+CoC-D (discussed in Section 3.6) can detect multiple soft
+errors but without correction ability. The analysis here
+serves as the fundamental basis of our low-overhead high-
+protection design, which will be presented in Section 4.3.
+4.2 Runtime Analysis
+In this section, we analyze the time complexity theoretically
+and present runtimes of all schemes based on experiments.
+Table 3 shows the time complexity of some basic check-
+sum operations, where is the coefﬁcient of CPU-intensive
+operations and represents the coefﬁcient for memory-
+intensive operations.
+Table 4 shows the theoretical time complexity of all the
+schemes. The full checksum scheme has the best soft error
+correction ability; however, its runtime is relatively long.
+Although the CoC scheme has lower ability than the other
+three schemes in correcting soft errors, it has the shortest
+runtime. Note that the kernel checksum Cw1andCw2can
+be precalculated before the application; there is no cost inTABLE 3
+Runtimes of Basic Operations
+Operation Derived Runtime
+block level convolution Dn
+WmChR2E2
+Total convolution operations NMChR2E2
+Compute the checksum of D NChH2
+Compute the checksum of O NME2
+ 0 2 4 6 8 10 12 14 16 18
+SeparateCoC+FCCoC+RC+FCCoC+ClC+FCNormalized RuntimeCoC-D
+CoC
+RC
+ClC
+FC
+(a) AlexNet
+ 0 2 4 6 8 10 12 14 16 18
+SeparateCoC+FCCoC+RC+FCCoC+ClC+FCNormalized RuntimeCoC-D
+CoC
+RC
+ClC
+FC (b) YOLOv2
+ 0 5 10 15 20
+SeparateCoC+FCCoC+RC+FCCoC+ClC+FCNormalized RuntimeCoC-D
+CoC
+RC
+ClC
+FC (c) YOLOv2 (Conv8)
+ 0 2 4 6 8 10 12 14 16 18
+SeparateCoC+FCCoC+RC+FCCoC+ClC+FCNormalized RuntimeCoC-D
+CoC
+RC
+ClC
+FC
+(d) VGG-19
+ 0 2 4 6 8 10 12 14 16 18
+SeparateCoC+FCCoC+RC+FCCoC+ClC+FCNormalized RuntimeCoC-D
+CoC
+RC
+ClC
+FC (e) ResNet-18
+ 0 2 4 6 8 10 12 14 16 18
+SeparateCoC+FCCoC+RC+FCCoC+ClC+FCNormalized RuntimeCoC-D
+CoC
+RC
+ClC
+FC (f) ResNet-18 (Conv1)
+Fig. 6. Worst-Case Normalized Runtime, Baseline is CoC-D
+generating kernel checksum in the row, column, and CoC
+schemes.
+To verify the correctness of the derived time complexity
+of the four schemes, we execute them on a supercomputer
+using four CNN models. We show the normalized worst-
+case runtime of the four schemes in the separate column
+of Figure 6. Other columns of this Figure represent the
+worst-case runtime of multischeme workﬂows and will be
+discussed in the next section. Experiments conﬁrm our con-
+clusion that CoC and CoC-D have the shortest runtime and
+that the runtime of the full checksum scheme is relatively
+long. We also see that the column checksum scheme has a
+much longer runtime than the row checksum scheme does.
+The reason is twofold. On the one hand, Wblocks have
+smaller sizes than Dblocks have, leading to longer time to
+compute D
+Cw2by the column checksum scheme than to
+compute Cd2
+Wby the row checksum scheme. On the
+other hand, computing row checksums ( Co1and Co3) is
+more efﬁcient than computing column checksums ( Co2and
+Co4), because the row checksum calculation can be reduced
+to efﬁcient column-summation operations.
+TABLE 4
+ABFT Schemes Runtime
+Scheme Derived RuntimeSoft Error
+Correction Ability
+FC(N+M)ChR2E2+(NChH2+ 2NME2) High
+RC 2MChR2E2+ 2(NChH2+NME2) Middle
+ClC 2NChR2E2+ 2(NME2) Middle
+CoC 3ChR2E2+(2NChH2+ 3NME2) Low
+7
+4.3 Multischeme Workﬂow for Soft Error Protection
+The four schemes we proposed have pros and cons in terms
+of their soft error correction ability and runtime overhead.
+To achieve the highest protection ability and lowest over-
+head, we propose a multischeme workﬂow by integrating
+the four schemes, as shown in Figure 7. The workﬂow is
+made up of two modules: error detection and error correc-
+tion. In our designed workﬂow, we use CoC-D to detect
+errors because it has the lowest overhead. For the error
+correction, we put CoC in the beginning because it is the
+most lightweight method. By comparison, FC has highest
+correction ability but also highest time overhead, so we put
+it at the end of the workﬂow.
+Error is 
+detected 
+No errors CoC-d CoC 
+Error is corrected Unable to 
+correct 
+error RC/ClC 
+Controller 
+ClC Use RC 
+Use ClC RC 
+Error is 
+corrected FC Skip RC/ClC Error is corrected 
+Unable to correct error 
+Error is 
+corrected 
+Finish Convolution 
+operation Start 
+Unable to 
+correct error 
+Fig. 7. Multischeme Workﬂow Designed to Detect/Correct Soft Errors
+The error detection modules will be executed for every
+execution whether there is a soft error or not. Thus, any
+unnecessary computations should be avoided in order to
+reduce the overall overhead. For instance, both CoC-D and
+FC are able to detect all the soft errors, but we adopt only
+CoC-D in the workﬂow for error detection because FC has a
+much higher overhead. RC and ClC cannot detect soft errors
+correctly if the checksum is corrupted.
+The error correction module will not be executed until
+some soft errors are detected. The schemes in this module
+will be invoked to ﬁx soft errors according to the workﬂow.
+If it fails to correct the errors due to inconsistency of check-
+sum blocks or illegal error locations, the next-level scheme
+will be invoked.
+Since the checksums can be reused among different CNN
+schemes in the workﬂow, the runtime of the workﬂow is
+actually lower than the sum of all schemes’ runtimes. For
+example, both CoC-D and CoC use Co5; if CoC-D detects
+soft errors and CoC is invoked to correct soft errors, CoC
+can save the time of computing Co5and its corresponding
+summation So5, since they have been computed by CoC-
+D. This analysis can also be conﬁrmed by our experiments.
+As shown in Figure 6, the relative runtime of CoC in the
+second column is reduced compared with that of CoC in the
+ﬁrst column. The relative runtime of RC in the third column
+is reduced compared with that of RC in the ﬁrst column.
+The decision to put RC and ClC in the workﬂow between
+CoC and FC is controlled by each layer. The reason to control
+RC/ClC in each layer is that their relative runtimes differ
+across layers. Since RC and ClC are symmetric based, in
+the following we present our analysis based mainly on RC,
+without loss of generality.We denote the runtime of the workﬂow CoC+FC as t0,
+the runtime of workﬂow CoC+RC as t1, and the runtime
+of workﬂow CoC+RC+FC as t2. Enabling RC can ﬁx some
+soft errors before FC, thus changing the runtime from t0to
+t1. When RC fails to correct soft errors, however, FC still
+needs to be invoked; and the runtime will increase from t0
+tot2. Denoting the probability of row soft errors by prand
+the probability of column soft errors by pc, we can derive
+the average time saved by RC as ty=pr(t0 t1)and the
+average time increase by RC as tn=pc(t2 t0). In order
+to minimize the total runtime, RC should be enabled when
+ty>tn.
+We give an example to further illustrate when RC should
+be enabled. Figure 6(b) shows the average runtime among
+all the convolutional layers in YOLOv2. In this ﬁgure, the
+runtime of CoC+RC is much lower than that of CoC+FC,
+and the runtime of CoC+RC+FC is slightly higher than that
+of CoC+FC. Therefore, enabling RC can save signiﬁcant
+runtime when the soft errors are able to be corrected by
+RC. On the other hand, a bit runtime penalty is incurred if
+RC fails to correct the soft errors. However, for the conv8
+layer in YOLOv2 (shown in Figure 6(c)), CoC+RC’s runtime
+is close to that of CoC+FC. Thus, enabling RC in this layer
+would barely reduce the overall runtime even though the
+soft errors can be corrected by RC. Moreover, CoC+RC+FC’s
+runtime is much higher than CoC+RC’s. As a result, the total
+runtime will increase signiﬁcantly if the soft errors cannot
+be corrected by RC. Hence, for this layer, it is better to use
+CoC+FC for error correction with RC disabled.
+In practice, the runtime t0,t1andt2can be computed
+by ofﬂine proﬁling. The probability values pcandprcan
+be estimated based on the size of Dand size of W. For
+instance, the soft error often strikes each element in the
+input under the independent and identical distribution. In
+this situation, it is easy to drive that the probability of soft
+errors occurring in Dis proportional to that of W(i.e.,pr
+pc=
+number of elements in D
+number of elements in W.
+5 RESOLVING BIAS, GROUPED CONVOLUTION ,AND
+BACK PROPAGATION
+In this section, we extend our solution to support bias,
+grouped convolution, and the back propagation of convo-
+lutional layers.
+5.1 Bias
+Bias is a 1Dvector that needs be added to the output of the
+convolutional layers. FT-Caffe provides protection for the
+bias operation.
+Many CNN frameworks add bias on the ﬂy with the
+convolution calculation. As a result, the output Oalready
+contains bias, whereas the output checksums do not con-
+tain bias since they are calculated by inputs and input
+checksums without bias. In order to compare the output
+checksums and the output O, bias has to be subtracted
+from output summation before comparison. Subtracting
+bias from output Odirectly before veriﬁcation and then
+adding bias to Oafter veriﬁcation is not feasible, however,
+because of the overhead of modifying every element in O.
+Table 5 shows the output checksums and adjusted output
+8
+summation for comparison in order to detect errors. The
+bias part of the formulations can be precomputed.
+TABLE 5
+Bias Adjustments for Output Checksums Comparison
+Checksum Adjust Summation
+Co1 So1[m][i][j] NBias[m]
+Co3 So3[m][i][j] (PN
+i=1i)Bias[m]
+Co2 So2[n][i][j] PmBias[m]
+Co4 So4[n][i][j] PmmBias[m]
+Co5 So5[i][j] NPmBias[m]
+Co6 So6[i][j] NPmmBias[m]
+Co7 So7[i][j] (PN
+i=1i)PmBias[m]
+5.2 ABFT for Grouped Convolution
+Grouped convolution is a special kind of convolution. Our
+schemes need to be modiﬁed to support this convolution.
+Deﬁne the number of groups as G. Each fmap basic block
+hasCh
+Ginstead ofCh channels. All the Mkernel basic
+blocks are divided into Ggroups, each havingM
+G3Dbasic
+blocks. The kernel block in the gth group does convolution
+only with the gth channel group of every fmap block. Figure
+8 shows this process for N=2, M=4, and G=2.
+d1
+d2Group 1
+Group 2
+Group 1
+Group 2d1
+d2W1W2W3W4Group 1 Group 2
+O11 O12 O13 O14 
+O21 O22 O23 O24 
+d1
+d2
+d1
+d2Group 1
+Group 2W1W2Group 1
+W3W4Group 2O11 O12 
+O21 O22 
+O13 O14 
+O23 O24 
+d1= D 1[1,…,N/2-1]; d 1 = D 1[N/2,…,N-1]; d 2= D 2[1,…,N/2-1]; d 2 = D 2[N/2,…,N-1] ' 'Grouped Convolution 
+Breakdown of Grouped Convolution Operation 
+Fig. 8. Demonstration of Grouped Convolution, Groups = 2
+The checksums for fmap Cd1andCd2stay the same. The
+checksum for kernel are redeﬁned as
+Cw1= [M
+G 1X
+m=0Wm;2M
+G 1X
+m=M
+GWm;:::;M 1X
+m=(G 1)M
+GWm]
+Cw2= [M
+G 1X
+m=0mWm;2M
+G 1X
+m=M
+GmWm;:::;M 1X
+m=(G 1)M
+GmWm]
+where Cw1andCw2are the combination of Gchecksums
+from each kernel group. Each checksum hasCh
+Gchannels,
+soChw1andChw1each haveGCh
+G=Chchannels, which
+are the same with every fmap block.
+The deﬁnition of output checksums Co1,Co2, ...,Co7
+stays the same. Let X[l::r]represent the channels from l
+torin matrixX. We can prove the following property for
+anyDnandWmaccording to Equation (1).
+Dn
+Wm=Dn[1::k 1]
+Wm[1::k 1]
++Dn[k::Ch ]
+Wm[k::Ch ];0k<ChUsing this equation, we can prove the relation between Co2
+andOas follows.
+Co2[n] =Dn
+[M
+G 1P
+m=0Wm;2M
+G 1P
+m=M
+GWm;;M 1P
+m=(G 1)M
+Gwm]
+=Dn[0::C
+G 1]
+M
+G 1P
+m=0wm+Dn[C
+G::2C
+G 1]
+2M
+G 1P
+m=M
+Gwm
+++Dn[(G 1)C
+G::C 1]
+M 1P
+m=(G 1)M
+Gwm
+=M 1P
+m=0Dn
+wm=M 1P
+m=0Onm
+Similar equations can be proved for Co1,Co3,Co4,Co5,
+Co6, andCo7. Therefore, all the ABFT schemes we proposed
+can be applied to grouped convolution.
+5.3 ABFT for Convolution Back Propagation
+Our schemes can also be applied to back propagation to-
+gether with forward pass so that the convolutional layers
+can be fully protected in the training phase.
+During back propagation, the gradient of kernel rW
+is used by methods such as gradient descent in order to
+update W. The gradient of fmap rDis used to getrO
+of the previous layer. As shown in Figure 9, the gradients
+are calculated as D
+rO=rWandWT
+rO=rD.
+Checksums forrOare used in this situation to protect the
+two convolution operations.
+D
+W:
+D1D2D3
+CK 
+CK 
+CK 
+W1W2W3CK 
+WT
+D:
+CK CK CK 
+W1
+W2
+W3T
+D3
+CK 
+D3
+D3
+Fig. 9. Demonstration of Checksum Design for Back Propagation
+Since CNN models are usually trained in a more stable
+environment than the inference stage and since the training
+stage can tolerate some soft errors because of their iterative-
+convergent nature, we focus our experiments on the infer-
+ence stage.
+6 E XPERIMENTAL EVALUATION
+In this section, we evaluate our multischeme workﬂow
+using our FT-Caffe fault tolerance CNN framework.
+6.1 Experimental Setup
+FT-Caffe. Our FT-Caffe framework is based on Intel-Caffe.
+MKL-DNN is enabled to support dynamic selection of con-
+volution execution. MKL-DNN contains all the convolution
+implementations we discussed in Section 2.2. It automati-
+cally chooses the most suitable implementation to use for
+each convolutional layer. To compare the runtime overhead
+of our solution with that of the ABFT designed for matrix-
+matrix multiplication, we also perform the experiments
+based on the MM-based convolution implementation.
+9
+CNN models and dataset. We tested our FT-Caffe with four
+widely used networks: AlexNet, VGG-19, ResNet-18, and
+YOLOv2. Pretrained Caffe models are used together with
+model prototypes for deployment. We adopt the ImageNet
+validation set, which contains 50k images. The images are
+preprocessed to smaller size in order to save picture pro-
+cessing time when the program starts. The batch size is set
+to 64.
+Experimental platforms. We conducted our experiments on
+the Bebop supercomputer [43] at Argonne National Labora-
+tory using up to 128 nodes. Each node is equipped with 128
+GB memory and two Intel Xeon E5-2695 v4 processors (each
+with 16 cores)
+Error injection. To demonstrate the overhead of our fault
+tolerant solutions, we inject soft errors at the source code
+level as most ABFT works did [29], [36]. The consequences
+of one computational fault or memory fault are simulated
+by randomly corrupting selected row or column of output.
+We denote the total number of convolutional layers of a
+CNN model as L. To assess the overhead accurately, we run
+the experiments for Lepochs corresponding to the numbers
+of convolutional layers of each network ( L= 5, 9, 16, 21 for
+AlexNet, YOLOv2, VGG-19, and ResNet-18, respectively).
+For theith epoch, we inject errors to ith convolutional layer.
+The ﬁnal overhead is the arithmetic mean of all the inference
+executions and the standard deviation in our experiments is
+within 5%.
+6.2 Experimental Results with MKL-DNN
+In this section, we present our evaluation results with MKL-
+DNN . We analyze the results from the perspective of execu-
+tion time overhead for both error-free cases and erroneous
+cases.
+Error-free cases. The experimental results in the error-
+free cases are presented in Figure 10(a). We can see from
+the ﬁgure that our FT-caffe can protect the inference stage
+with less than 4%, 4.5%, 8%, and 5% overhead for AlexNet,
+VGG-19, YOLOv2, and ResNet-18, respectively, regardless
+of the convolution implementation. These results show that
+our CoC-D error detection scheme has relatively short run-
+time compared with the convolution execution, which is
+attributed to the design of avoiding unnecessary compu-
+tations in our solution (see Section 4.3). The reason ResNet-
+18 has higher overhead than the other models have is that
+the ResNet-18 has small convolution kernels ( Wsize is
+MC33) in all the convolutional layers, which have
+relatively short computing time; thus, the checksum compu-
+tation and veriﬁcation time percentage would be relatively
+large.
+Erroneous cases – RC/ClC disabled. To show the effective-
+ness of our layerwise optimization for RC/ClC, we ﬁrst
+test our multischeme workﬂow with RC/ClC disabled in
+erroneous cases. Figure 10(b) demonstrates that the run-
+time overheads (including both error detection and error
+correction) of the four CNN models are all below 9%. The
+error detection overhead is higher than the error correction
+overhead because the error detection scheme is executed for
+every convolution operation whereas the error correction
+schemes are invoked only when errors are detected. The full
+checksum scheme dominates the error correction overhead,thus conﬁrming our analysis in Section 4 that FC has high
+protection ability and relatively longer runtime.
+Erroneous cases – layerwise RC/ClC optimization. Figure
+10(c) demonstrates the runtime overhead with layerwise
+optimization enabled. Every layer decides whether to use
+RC/ClC independently, as described in Section 4.3. Com-
+pared with Figure 10(b), the error correction overhead de-
+creases by 40%60% (e.g., 1.55%!0.72% for YOLOv2 as
+shown in Figure 10(b) vs. (c)) in all CNN models because of
+the effectiveness of RC. Figure 11(a) shows the distribution
+of varies workﬂows that is the result of layerwise RC/ClC
+optimization. We can see that RC is enabled in all layers of
+AlexNet and VGG-19, while it is disabled in 30% to 40% of
+layers in ResNet-18 and YOLOv2. The results demonstrate
+the need for layerwise RC optimization since RC is not
+suitable for all layers in the same CNN model. Figure 11(b)
+shows the distribution of soft errors by the schemes that
+correct them. Less than 5% of soft errors are corrected
+by CoC because of the low correction ability of CoC. RC
+corrects nearly 90% of the soft errors in AlexNet and VGG-
+19 because RC is enabled in all layers of the two CNN
+models and the probability of soft errors striking a row
+inOis higher than the probability of soft errors striking
+a column.
+0%2%4%6%8%10%12%
+AlexNet VGG-19 ResNet-18 YOLOv2OverheadCoC-D
+(a) Error-free
+0%2%4%6%8%10%12%
+AlexNet VGG-19 ResNet-18 YOLOv2OverheadCoC-D
+CoC
+FC (b) Erroneous
+(RC/ClC Disabled)
+0%2%4%6%8%10%12%
+AlexNet VGG-19 ResNet-18 YOLOv2OverheadCoC-D
+CoC
+RC
+ClC
+FC(c) Erroneous
+(RC/ClC enabled)
+Fig. 10. Runtime Overhead with MKL-DNN
+0%50%100%150%200%
+AlexNet VGG-19 ResNet-18 YOLOv2PercentageCoC+FC
+CoC+RC+FC
+CoC+ClC+FC
+(a) Distribution of different
+workﬂows
+0%50%100%150%200%
+AlexNet VGG-19 ResNet-18 YOLOv2PercentageCoC
+RC
+ClC
+FC(b) Distribution of soft errors cor-
+rected by schemes
+Fig. 11. Breakdown Analysis of Multischeme Workﬂow with MKL-DNN
+Erroneous cases – breakdown of error correction overhead by
+layer. To better illustrate the overhead of our solution for
+each model, we present in Figure 12 the breakdown of the
+overhead by layer. The ﬁgure demonstrates that layers have
+diverse overheads of error protection due to the different
+shapes of DandW. We also notice that the overhead of RC
+differs among layers in the same model, thus conﬁrming the
+functionality of our layerwise RC/ClC optimization.
+10
+0.0%0.5%1.0%1.5%2.0%
+conv1 conv2 conv3 conv4 conv5OverheadCoC-D
+CoC
+RC
+ClC
+FC
+(a) AlexNet
+0.0%0.5%1.0%1.5%2.0%
+conv1conv2conv3conv4conv5conv6conv7conv8conv9OverheadCoC-D
+CoC
+RC
+ClC
+FC (b) YOLOv2
+0.00%0.20%0.40%0.60%0.80%1.00%1.20%conv1conv2conv3conv4conv5conv6conv7conv8conv9conv10conv11conv12conv13conv14conv15conv16OverheadCoC-D
+CoC
+RC
+ClC
+FC
+(c) VGG-19
+0.00%0.20%0.40%0.60%0.80%1.00%1.20%conv1conv2conv3conv4conv5conv6conv7conv8conv9conv10conv11conv12conv13conv14conv15conv16conv17conv18conv19conv20conv21OverheadCoC-D
+CoC
+RC
+ClC
+FC (d) ResNet-18
+Fig. 12. Breakdown of Runtime Overhead by Layer with MKL-DNN
+6.3 Experimental Results with MM-Based Convolution
+In this section, we evaluate the runtime overhead of
+our multischeme workﬂow and the traditional MM-based
+ABFT. Since the MM-based ABFT supports only the MM-
+based convolution implementation, we set the convolution
+implementation to the MM-based mode in MKL-DNN. We
+implemented MM-based ABFT rigorously based on [26],
+which has1% overhead for large and square matrices
+as claimed by the authors of that work. The overhead of
+the MM-based ABFT in convolution execution is shown in
+Table 6. The MM-based ABFT incurs up to 60% overhead
+even without error injection for the four CNN models.
+This result is consistent with our analysis in Section 2.3.
+Considering that the MM-based ABFT cannot protect the
+whole process of MM-based convolution and cannot protect
+other convolution implementations, we conclude that the
+MM-based ABFT is unsuitable for soft error protection of
+CNN applications.
+Figure 13 shows the overhead of our multischeme work-
+ﬂow for MM-based convolution. The overhead of our so-
+lution is below 6% in the error-free cases and below 6.5%
+in the cases with injected errors for all CNN models. The
+layerwise RC/ClC optimization reduces the overhead for
+error correction by as much as 77%. Figure 14(a) shows the
+fractions of different workﬂows chosen by convolutional
+layers. Figure 14(b) shows the distribution of soft errors
+that are corrected by different schemes. Compared with the
+MKL-DNN implementation, more layers adopt RC for error
+correction in the MM-based convolution (see Figure 11 ver-
+sus Figure 14). The reason is that the relative runtime of RC
+compared with FC is lower in the MM-based convolution
+implementation than other implementations.
+TABLE 6
+Overhead of MM-Based ABFT for MM-Based Convolution, No Error
+Injection
+Model AlexNet YOLOv2 VGG-19 ResNet-18
+Overhead 27.9% 57.5% 45.8% 61.2%
+0%2%4%6%8%10%12%
+AlexNet VGG-19 ResNet-18 YOLOv2OverheadCoC-D(a) Error-Free
+0%2%4%6%8%10%12%
+AlexNet VGG-19 ResNet-18 YOLOv2OverheadCoC-D
+CoC
+FC (b) Erroneous
+(RC/ClC Disabled)
+0%2%4%6%8%10%12%
+AlexNet VGG-19 ResNet-18 YOLOv2OverheadCoC-D
+CoC
+RC
+ClC
+FC(c) Erroneous
+(RC/ClC enabled)
+Fig. 13. Runtime Overhead with MM-based Convolution
+0%50%100%150%200%
+AlexNet VGG-19 ResNet-18 YOLOv2PercentageCoC+FC
+CoC+RC+FC
+CoC+ClC+FC
+(a) Distribution of different
+workﬂows
+0%50%100%150%200%
+AlexNet VGG-19 ResNet-18 YOLOv2PercentageCoC
+RC
+ClC
+FC(b) Distribution of soft errors cor-
+rected by schemes
+Fig. 14. Breakdown Analysis of Multischeme Workﬂow with MM-Based
+Convolution
+6.4 Parallel Performance Evaluation
+In this section, we present the parallel performance eval-
+uation results of AlexNet, YOLOv2, VGG-19, and ResNet-
+18. Original images of the ImageNet validation dataset are
+used without preprocessing in order to better demonstrate
+the process of parallel CNN inference application. In the
+beginning of the parallel process, images are distributed
+to the local disk of each node; then each node starts to
+do the data processing step ﬁrst to convert the images to
+suitable size required by CNN models, and then execute
+the inference step under the protection of our multischeme
+workﬂow.
+We conducted the parallel evaluation in both error-free
+and erroneous cases. However, because of space limits, we
+present only the parallel performance evaluation results in
+the situation with injected errors (as shown in Figure 15).
+In fact, the evaluation results in the error-free situation are
+similar. Speciﬁcally, experiments show that our multischeme
+workﬂow has a very good scalability: that is, the soft error
+protection overhead does not increase with the number of
+nodes at all. In absolute terms, the overhead stays around
+2%6% in the erroneous cases and is only 1% 4% in the
+error-free cases.
+7 R ELATED WORK
+The importance of fault tolerance for convolution has been
+emerging in recent years. Guaranteeing the correctness of
+inference is vital in a safety-critical use case [19]. To achieve
+better resiliency for CNN networks, researchers have been
+exploring solutions from different perspectives including
+hardware, system, and software. For hardware, Kim et al.
+[49] proposed a hardened 3D die-stacked memory based
+on the fault characteristics in convolutional DNNs. Li et
+al. [19] proposed to add redundant circuits selectively to
+11
+ 0 10 20 30 40 50 60
+8 16 32 64 128Time (second)
+NodesImage Processing
+Inference
+Soft Error
+ Protection
+(a) AlexNet
+ 0 20 40 60 80 100 120 140 160
+8 16 32 64 128Time (second)
+NodesImage Processing
+Inference
+Soft Error
+ Protection (b) YOLOv2
+ 0 50 100 150 200 250 300 350 400
+8 16 32 64 128Time (second)
+NodesImage Processing
+Inference
+Soft Error
+ Protection
+(c) VGG-19
+ 0 10 20 30 40 50 60 70 80 90 100
+8 16 32 64 128Time (second)
+NodesImage Processing
+Inference
+Soft Error
+ Protection (d) ResNet-18
+Fig. 15. Parallel Performance Evaluation of Our Solution with Injected
+Errors on Bebop Supercomputer
+harden the latches based on analysis of data resiliency.
+Compared with traditional full-hardware redundancy tech-
+niques, those partial-hardware redundancy techniques may
+not double the power usage. However, hardware modiﬁca-
+tion incurs signiﬁcant effort considering the varied CNN
+models and their accelerators. At the system level, other
+than the DMR/TMR protection, checkpoint/restart (C/R) is
+also applied to large-scale machine learning systems. Sub-
+sequently, Qiao et al. proposed a more efﬁcient C/R scheme
+based on their derived upper bound on extra iteration cost
+with perturbations [50]. While those C/R techniques are
+promising to protect model training from soft errors, they
+are not good ﬁts for inference since one inference execution
+could be very fast and applying C/R incurs signiﬁcant
+overhead. Researchers have therefore pursued lightweight
+software-level solutions. By applying ABFT techniques for
+MM-based convolution, Santos et al. [20] reported that
+50%60% of radiation-induced corruptions could be cor-
+rected. Unfortunately, the traditional ABFT works only for
+MM-based convolution, which is inefﬁcient in most cases.
+In contrast, our solutions can work for any convolution
+implementations.
+8 C ONCLUSION AND FUTURE WORK
+This work focus on extending ABFT to convolution oper-
+ations in convolutional neural networks. We propose four
+ABFT schemes and a multischeme workﬂow to protect
+the convolutional layer. We further extend our schemes to
+support bias, grouped convolution, and convolution back
+propagation. We implement an efﬁcient CNN framework,
+FT-Caffe, that is resilient to silent data corruption.
+Experiments demonstrate that our proposed fault-
+tolerant solutions incur negligible overhead. In absolute
+terms, FT-Caffe can acheive less than 8% overhead for the
+most widely used CNN models, including AlexNet, YOLO,
+VGG-19, and ResNet-18, in both error-free and erroneous
+cases.We plan to extend the implementation to more CNN
+frameworks and to design architecture-speciﬁc optimiza-
+tions for different hardware including GPU, FPGA, and AI
+accelerators.
+ACKNOWLEDGMENTS
+This research was supported by the Exascale Computing
+Project (ECP), Project Number: 17-SC-20-SC, a collaborative
+effort of two DOE organizations - the Ofﬁce of Science and
+the National Nuclear Security Administration, responsible
+for the planning and preparation of a capable exascale
+ecosystem, including software, applications, hardware, ad-
+vanced system engineering and early testbed platforms, to
+support the nations exascale computing imperative. The
+material was supported by the U.S. Department of En-
+ergy, Ofﬁce of Science, under contract DE-AC02-06CH11357.
+This work was also supported by the National Science
+Foundation under Grants CCF-1513201, CCF-1619253, and
+OAC-2034169. We acknowledge the computing resources
+provided on Bebop, which is operated by the Laboratory
+Computing Resource Center at Argonne National Labora-
+tory.
+REFERENCES
+[1] A. Krizhevsky, I. Sutskever, and G. E. Hinton, “Imagenet classiﬁ-
+cation with deep convolutional neural networks,” in Advances in
+neural information processing systems , 2012, pp. 1097–1105.
+[2] K. Simonyan and A. Zisserman, “Very deep convolutional
+networks for large-scale image recognition,” arXiv preprint
+arXiv:1409.1556 , 2014.
+[3] K. He, X. Zhang, S. Ren, and J. Sun, “Deep residual learning
+for image recognition,” in Proceedings of the IEEE conference on
+Computer Vision and Pattern Recognition , 2016, pp. 770–778.
+[4] J. Redmon and A. Farhadi, “Yolo9000: Better, faster, stronger,” in
+Proceedings of the IEEE conference on computer vision and pattern
+recognition , 2017, pp. 7263–7271.
+[5] Y. Goldberg, “Neural network methods for natural language pro-
+cessing,” Synthesis Lectures on Human Language Technologies , vol. 10,
+no. 1, pp. 1–309, 2017.
+[6] S.-C. B. Lo, H.-P . Chan, J.-S. Lin, H. Li, M. T. Freedman, and S. K.
+Mun, “Artiﬁcial convolution neural network for medical image
+pattern recognition,” Neural networks , vol. 8, no. 7-8, pp. 1201–1214,
+1995.
+[7] E. Gawehn, J. A. Hiss, and G. Schneider, “Deep learning in drug
+discovery,” Molecular informatics , vol. 35, no. 1, pp. 3–14, 2016.
+[8] J. M. Wozniak et al. , “Candle/supervisor: A workﬂow framework
+for machine learning applied to cancer research,” BMC Bioinfor-
+matics , vol. 19, no. 18, p. 491, 2018.
+[9] J. J. Zhang et al. , “Building robust machine learning systems:
+Current progress, research challenges, and opportunities,” in Pro-
+ceedings of the 56th Annual Design Automation Conference 2019 , ser.
+DAC ’19. New York, NY, USA: ACM, 2019.
+[10] M. T. Le, F. Diehl, T. Brunner, and A. Knol, “Uncertainty estimation
+for deep neural object detectors in safety-critical applications,”
+in2018 21st International Conference on Intelligent Transportation
+Systems (ITSC) , 2018, pp. 3873–3878.
+[11] S. Burton, L. Gauerhof, and C. Heinzemann, “Making the case for
+safety of machine learning in highly automated driving,” in Com-
+puter Safety, Reliability, and Security . Cham: Springer International
+Publishing, 2017, pp. 5–16.
+[12] M. Snir et al. , “Addressing failures in exascale computing,” Inter-
+national Journal of High Performance Computing Applications , 2014.
+[13] L. Bautista-Gomez, F. Zyulkyarov, O. Unsal, and S. McIntosh-
+Smith, “Unprotected computing: A large-scale study of dram raw
+error rate on a supercomputer,” in Proceedings of the International
+Conference for High Performance Computing, Networking, Storage and
+Analysis , ser. SC 16. IEEE Press, 2016.
+12
+[14] L. Tan, S. L. Song, P . Wu, Z. Chen, R. Ge, and D. J. Kerbyson, “In-
+vestigating the interplay between energy efﬁciency and resilience
+in high performance computing,” in 2015 IEEE International Paral-
+lel and Distributed Processing Symposium . IEEE, 2015, pp. 786–796.
+[15] J. P . Walters, K. M. Zick, and M. French, “A practical character-
+ization of a nasa spacecube application through fault emulation
+and laser testing,” in Proceedings of the 2013 43rd Annual IEEE/IFIP
+International Conference on Dependable Systems and Networks , ser.
+DSN ’13. USA: IEEE Computer Society, 2013, pp. 1–8.
+[16] A. Geist, “How to kill a supercomputer: Dirty power, cosmic rays,
+and bad solder,” IEEE Spectrum , vol. 10, pp. 2–3, 2016.
+[17] J. Zhang, K. Rangineni, Z. Ghodsi, and S. Garg, “Thundervolt: En-
+abling aggressive voltage underscaling and timing error resilience
+for energy efﬁcient deep learning accelerators,” in Proceedings of
+the 55th Annual Design Automation Conference , ser. DAC ’18. New
+York, NY, USA: ACM, 2018.
+[18] W. Choi, D. Shin, J. Park, and S. Ghosh, “Sensitivity based er-
+ror resilient techniques for energy efﬁcient deep neural network
+accelerators,” in Proceedings of the 56th Annual Design Automation
+Conference 2019 , ser. DAC ’19. New York, NY, USA: ACM, 2019.
+[19] G. Li et al. , “Understanding error propagation in deep learning
+neural network (dnn) accelerators and applications,” in Proceed-
+ings of the International Conference for High Performance Computing,
+Networking, Storage and Analysis , ser. SC ’17. New York, NY, USA:
+ACM, 2017, pp. 8:1–8:12.
+[20] F. F. d. Santos, L. Draghetti, L. Weigel, L. Carro, P . Navaux,
+and P . Rech, “Evaluation and mitigation of soft-errors in neural
+network-based object detection in three gpu architectures,” in
+2017 47th Annual IEEE/IFIP International Conference on Dependable
+Systems and Networks Workshops (DSN-W) , 2017, pp. 169–176.
+[21] B. Reagen et al. , “Ares: A framework for quantifying the resilience
+of deep neural networks,” in Proceedings of the 55th Annual Design
+Automation Conference , ser. DAC ’18. New York, NY, USA: ACM,
+2018, pp. 17:1–17:6.
+[22] R. Salay, R. Queiroz, and K. Czarnecki, “An analysis of iso 26262:
+Using machine learning safely in automotive software,” arXiv
+preprint arXiv:1709.02435 , 2017.
+[23] D. Li, Z. Chen, P . Wu, and J. S. Vetter, “Rethinking algorithm-based
+fault tolerance with a cooperative software-hardware approach,”
+inProceedings of the International Conference on High Performance
+Computing, Networking, Storage and Analysis , ser. SC 13. New York,
+NY, USA: ACM, 2013.
+[24] X. Vera, J. Abella, J. Carretero, and A. Gonz ´alez, “Selective repli-
+cation: A lightweight technique for soft errors,” ACM Transactions
+on Computer Systems (TOCS) , vol. 27, no. 4, p. 8, 2009.
+[25] K.-H. Huang and J. A. Abraham, “Algorithm-based fault tolerance
+for matrix operations,” IEEE Transactions on Computers , vol. 100,
+no. 6, pp. 518–528, 1984.
+[26] P . Wu, Q. Guan, N. DeBardeleben, S. Blanchard, D. Tao, X. Liang,
+J. Chen, and Z. Chen, “Towards practical algorithm based fault
+tolerance in dense linear algebra,” in Proceedings of the 25th ACM
+International Symposium on High-Performance Parallel and Distributed
+Computing , ser. HPDC ’16. New York, NY, USA: ACM, 2016, pp.
+31–42.
+[27] P . Wu, D. Li, Z. Chen, J. S. Vetter, and S. Mittal, “Algorithm-
+directed data placement in explicitly managed non-volatile mem-
+ory,” in Proceedings of the 25th ACM International Symposium on
+High-Performance Parallel and Distributed Computing , ser. HPDC 16.
+New York, NY, USA: Association for Computing Machinery, 2016,
+p. 141152.
+[28] L. Tan, S. Kothapalli, L. Chen, O. Hussaini, R. Bissiri, and Z. Chen,
+“A survey of power and energy efﬁcient techniques for high per-
+formance numerical linear algebra operations,” Parallel Computing ,
+vol. 40, no. 10, pp. 559 – 573, 2014.
+[29] J. Chen, H. Li, S. Li, X. Liang, P . Wu, D. Tao, K. Ouyang, Y. Liu,
+K. Zhao, Q. Guan, and Z. Chen, “Fault tolerant one-sided matrix
+decompositions on heterogeneous systems with gpus,” in Proceed-
+ings of the International Conference for High Performance Computing,
+Networking, Storage, and Analysis , ser. SC ’18. Piscataway, NJ, USA:
+IEEE Press, 2018, pp. 68:1–68:12.
+[30] J. Chen, N. Xiong, X. Liang, D. Tao, S. Li, K. Ouyang, K. Zhao,
+N. DeBardeleben, Q. Guan, and Z. Chen, “Tsm2: optimizing tall-
+and-skinny matrix-matrix multiplication on gpus,” in Proceedings
+of the ACM International Conference on Supercomputing , 2019, pp.
+106–116.
+[31] C. Rivera, J. Chen, N. Xiong, S. L. Song, and D. Tao, “Tsm2x:High-performance tall-and-skinny matrix-matrix multiplication
+on gpus,” 2020.
+[32] Z. Chen, “Online-abft: An online algorithm based fault tolerance
+scheme for soft error detection in iterative methods,” in Proceedings
+of the 18th ACM SIGPLAN Symposium on Principles and Practice of
+Parallel Programming , ser. PPoPP ’13. New York, NY, USA: ACM,
+2013, pp. 167–176.
+[33] D. Tao, S. L. Song, S. Krishnamoorthy, P . Wu, X. Liang, E. Z.
+Zhang, D. Kerbyson, and Z. Chen, “New-sum: A novel online
+abft scheme for general iterative methods,” in Proceedings of the
+25th ACM International Symposium on High-Performance Parallel and
+Distributed Computing , ser. HPDC ’16. New York, NY, USA: ACM,
+2016, pp. 43–55.
+[34] D. Tao, S. Di, X. Liang, Z. Chen, and F. Cappello, “Improving
+performance of iterative methods by lossy checkponting,” in
+Proceedings of the 27th International Symposium on High-Performance
+Parallel and Distributed Computing , 2018, pp. 52–65.
+[35] D. Tao, “Fault tolerance for iterative methods in high-performance
+computing,” Ph.D. dissertation, UC Riverside, 2018.
+[36] X. Liang, J. Chen, D. Tao, S. Li, P . Wu, H. Li, K. Ouyang, Y. Liu,
+F. Song, and Z. Chen, “Correcting soft errors online in fast fourier
+transform,” in Proceedings of the International Conference for High
+Performance Computing, Networking, Storage and Analysis , ser. SC
+’17. New York, NY, USA: ACM, 2017, pp. 30:1–30:12.
+[37] S. Li, H. Li, X. Liang, J. Chen, E. Giem, K. Ouyang, K. Zhao,
+S. Di, F. Cappello, and Z. Chen, “Ft-isort: Efﬁcient fault tolerance
+for introsort,” in Proceedings of the International Conference for High
+Performance Computing, Networking, Storage and Analysis , ser. SC 19.
+New York, NY, USA: Association for Computing Machinery, 2019.
+[38] J. Cong and B. Xiao, “Minimizing computation in convolutional
+neural networks,” in Artiﬁcial Neural Networks and Machine Learn-
+ing – ICANN 2014 . Springer International Publishing, 2014, pp.
+281–290.
+[39] Y.-H. Chen, T. Krishna, J. S. Emer, and V . Sze, “Eyeriss: An energy-
+efﬁcient reconﬁgurable accelerator for deep convolutional neural
+networks,” IEEE journal of solid-state circuits , vol. 52, no. 1, pp. 127–
+138, 2016.
+[40] S. Jin, S. Di, X. Liang, J. Tian, D. Tao, and F. Cappello, “Deepsz:
+A novel framework to compress deep neural networks by using
+error-bounded lossy compression,” in Proceedings of the 28th In-
+ternational Symposium on High-Performance Parallel and Distributed
+Computing , 2019, pp. 159–170.
+[41] Z. Hu, X. Zou, W. Xia, S. Jin, D. Tao, Y. Liu, W. Zhang, and
+Z. Zhang, “Delta-dnn: Efﬁciently compressing deep neural net-
+works via exploiting ﬂoats similarity,” in The 49th International
+Conference on Parallel Processing (ICPP 2020) , 2020.
+[42] J. Deng, W. Dong, R. Socher, L.-J. Li, K. Li, and L. Fei-Fei, “Im-
+agenet: A large-scale hierarchical image satabase,” in 2009 IEEE
+conference on computer vision and pattern recognition . IEEE, 2009,
+pp. 248–255.
+[43] Bebop supercomputer. Available at https://www.lcrc.anl.gov/
+systems/resources/bebop, 2019, online.
+[44] A. Lavin and S. Gray, “Fast algorithms for convolutional neural
+networks,” in 2016 IEEE Conference on Computer Vision and Pattern
+Recognition (CVPR) , 2016, pp. 4013–4021.
+[45] S. Chetlur, C. Woolley, P . Vandermersch, J. Cohen, J. Tran, B. Catan-
+zaro, and E. Shelhamer, “cudnn: Efﬁcient primitives for deep
+learning,” arXiv preprint arXiv:1410.0759 , 2014.
+[46] T. Chen, Z. Du, N. Sun, J. Wang, C. Wu, Y. Chen, and O. Temam,
+“Diannao: A small-footprint high-throughput accelerator for ubiq-
+uitous machine-learning,” in Proceedings of the 19th International
+Conference on Architectural Support for Programming Languages and
+Operating Systems , ser. ASPLOS 14. New York, NY, USA: ACM,
+2014, pp. 269–284.
+[47] NVIDIA, http://nvdla.org, 2019, online.
+[48] S. Liu, Q. Wang, and G. Liu, “A versatile method of discrete
+convolution and fft (dc-fft) for contact analyses,” Wear , vol. 243,
+no. 1, pp. 101–111, 2000.
+[49] J.-S. Kim and J.-S. Yang, “Dris-3: Deep neural network reliability
+improvement scheme in 3d die-stacked memory based on fault
+analysis,” in Proceedings of the 56th Annual Design Automation
+Conference 2019 , ser. DAC ’19. New York, NY, USA: ACM, 2019,
+pp. 129:1–129:6.
+[50] A. Qiao, B. Aragam, B. Zhang, and E. Xing, “Fault tolerance in
+iterative-convergent machine learning,” in Proceedings of the 36th
+International Conference on Machine Learning , ser. ICML, vol. 97.
+Long Beach, California, USA: PMLR, 2019, pp. 5220–5230.
+13
+Kai Zhao received his bachelor’s degree from
+Peking University in 2014 and will receive his
+Ph.D. degree from University of California, River-
+side in 2022. He is a long-term intern at Argonne
+National Laboratory. His research interests in-
+clude high-performance computing, scientiﬁc
+data management and reduction, and resilient
+machine learning. Email: kzhao016@ucr.edu.
+Sheng Di (Senior Member, IEEE) received his
+master’s degree from Huazhong University of
+Science and Technology in 2007 and Ph.D. de-
+gree from the University of Hong Kong in 2011.
+He is currently a computer scientist at Argonne
+National Laboratory. Dr. Di’s research interest
+involves resilience on high-performance comput-
+ing (such as silent data corruption, optimization
+checkpoint model, and in-situ data compression)
+and broad research topics on cloud comput-
+ing (including optimization of resource allocation,
+cloud network topology, and prediction of cloud workload/hostload). He
+is working on multiple HPC projects, such as detection of silent data
+corruption, characterization of failures and faults for HPC systems, and
+optimization of multilevel checkpoint models. Email: sdi1@anl.gov.
+Sihuan Li is a Ph.D. student in computer sci-
+ence at University of California, Riverside. He
+obtained his bachelor’s degree in math from
+Huazhong University of Science and Technol-
+ogy, China. He did a long-term internship at
+Argonne National Laboratory. Broadly speaking,
+his research interests fall into High Performance
+Computing. Speciﬁcally, he mainly studies Al-
+gorithm Based Fault Tolerance (ABFT), lossy
+compression and their applications in large scale
+scientiﬁc simulations. He is an IEEE student
+member. Email: sli049@ucr.edu.
+Xin Liang is a Computer/Data Scientist at
+Oak Ridge National Laboratory. He received
+his Ph.D. degree from University of California,
+Riverside in 2019 and his bachelor’s degree
+from Peking University in 2014. His research
+interests include high-performance computing,
+parallel and distributed systems, scientiﬁc data
+management and reduction, big data analytic,
+scientiﬁc visualization, and cloud computing. He
+has interned in multiple national laboratories and
+worked on several exascale computing projects.
+He is a member of the IEEE. Email: liangx@ornl.gov.
+Yujia Zhai received his bachelor’s degree from
+University of Science and Technology of China
+in 2016, a master’s degree from Duke Univer-
+sity in 2018, and will receive his Ph.D. de-
+gree from University of California, Riverside
+in 2023. His research interests include high-
+performance computing, parallel and distributed
+systems, and numerical linear algebra software.
+Email: yzhai015@ucr.edu.
+Jieyang Chen (Member, IEEE) is a Computer
+Scientist at Computer Science and Mathemat-
+ics Division at Oak Ridge National Laboratory.
+He received his master and Ph.D. degrees in
+Computer Science from University of Califor-
+nia, Riverside in 2014 and 2019. He received
+a bachelors degree in Computer Science and
+Engineering from Beijing University of Tech-
+nology in 2012. His research interests include
+high-performance computing, parallel and dis-
+tributed systems, and big data analytics. Email:
+chenj3@ornl.gov.
+Kaiming Ouyang received his bachelor’s de-
+gree from University of Electronic Science and
+Technology of China and joined the University of
+California, Riverside SuperLab in Fall 2016. He
+will receive his Ph.D. degree from University of
+California, Riverside in 2021. He is a long-term
+intern at Argonne National Laboratory PMRS
+group led by Dr. Balaji and supervised by Dr. Si.
+His research interest is parallel runtime system.
+Email: kouya001@ucr.edu.
+Franck Cappello (Fellow, IEEE) is the direc-
+tor of the Joint-Laboratory on Extreme Scale
+Computing gathering six of the leading high-
+performance computing institutions in the world:
+Argonne National Laboratory, National Center
+for Scientiﬁc Applications, Inria, Barcelona Su-
+percomputing Center, Julich Supercomputing
+Center, and Riken AICS. He is a senior computer
+scientist at Argonne National Laboratory and an
+adjunct associate professor in the Department of
+Computer Science at the University of Illinois at
+Urbana-Champaign. He is an expert in resilience and fault tolerance for
+scientiﬁc computing and data analytics. Recently he started investigat-
+ing lossy compression for scientiﬁc data sets to respond to the pressing
+needs of scientist performing large-scale simulations and experiments.
+His contribution to this domain is one of the best lossy compressors for
+scientiﬁc data set respecting user-set error bounds. He is a member of
+the editorial board of the IEEE Transactions on Parallel and Distributed
+Computing and of the ACM HPDC andIEEE CCGRID steering commit-
+tees. He is a fellow of the IEEE. Email: cappello@mcs.anl.gov.
+Zizhong Chen (Senior Member, IEEE) received
+a bachelor’s degree in mathematics from Beijing
+Normal University, a master’s degree degree in
+economics from the Renmin University of China,
+and a Ph.D. degree in computer science from
+the University of Tennessee, Knoxville. He is a
+professor of computer science at the University
+of California, Riverside. His research interests in-
+clude high-performance computing, parallel and
+distributed systems, big data analytics, cluster
+and cloud computing, algorithm-based fault tol-
+erance, power and energy efﬁcient computing, numerical algorithms and
+software, and large-scale computer simulations. His research has been
+supported by National Science Foundation, Department of Energy, CMG
+Reservoir Simulation Foundation, Abu Dhabi National Oil Company,
+Nvidia, and Microsoft Corporation. He received a CAREER Award from
+the US National Science Foundation and a Best Paper Award from the
+International Supercomputing Conference. He is a Senior Member of the
+IEEE and a Life Member of the ACM. He currently serves as a subject
+area editor for Elsevier Parallel Computing journal and an associate
+editor for the IEEE Transactions on Parallel and Distributed Systems .
+Email: chen@cs.ucr.edu.

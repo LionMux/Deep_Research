@@ -1,0 +1,114 @@
+{
+  "session_id": "full_1778450985540",
+  "query": "CNN fault location transmission line",
+  "created_at": 1778450985.5405173,
+  "evidence_papers": [
+    "demo1"
+  ],
+  "evidence_paper_source": [
+    "local_index"
+  ],
+  "selected_doc_ids": [
+    "demo1"
+  ],
+  "selected_chunk_ids": [],
+  "coverage_report": {
+    "overall": {
+      "total_papers_selected": 1,
+      "clusters": 1,
+      "diversity_metrics": {
+        "tag_counts": {
+          "T": 1,
+          "E": 0,
+          "M": 0,
+          "A": 0
+        }
+      }
+    },
+    "clusters": [
+      {
+        "cluster_id": "cluster_T",
+        "cluster_label": "PrimaryTag:T",
+        "paper_ids": [
+          "demo1"
+        ],
+        "budget_alloc": 1,
+        "coverage_notes": [
+          "Selected 1 for tag T"
+        ],
+        "gaps_estimate": []
+      }
+    ]
+  },
+  "config_snapshot": {
+    "target_papers": 3,
+    "coverage_mode": "balanced",
+    "style": "engineer",
+    "max_sections": 1,
+    "verification_level": "basic",
+    "freshness": "local_only",
+    "session_store": "in_memory",
+    "random_seed": null,
+    "sufficiency_policy": {
+      "mode": "hybrid_v2",
+      "thresholds": {
+        "min_verified_facts": 8,
+        "min_coverage_sentences": 0.55,
+        "max_gaps": 2,
+        "min_sentence_pool": 12,
+        "min_coverage_proxy": 0.55,
+        "consistency_required_iters": 1,
+        "llm_judge_accept_if": "enough"
+      },
+      "score_weights": {
+        "w_verified_ratio": 0.45,
+        "w_with_gaps": 0.35,
+        "w_coverage_proxy": 0.2
+      }
+    },
+    "evidence_version": "61ea51136a1eb39db39c889c9c53ebd21e5ce9e78721a6c2c40f8e16b782a879"
+  },
+  "synthesis": {
+    "final_text": "# Research Synthesis\n\n\n**Sections:** 6  \n\n**Sub-sections:** 6  \n\n**Facts extracted:** 5  \n\n**Verified facts:** 5  \n\n**Avg. confidence:** 40%\n\n\n## Contents\n\n\n1. [CNN-Based Fault Location in Transmission Lines](#section-1)\n\n2. [Comparison with Traditional Methods](#section-2)\n\n3. [Handling of Data Imbalance and Noise](#section-3)\n\n4. [Real-World Implementation and Computational Constraints](#section-4)\n\n5. [Generalization Across Different Network Topologies](#section-5)\n\n6. [Evaluation Metrics and Validation Methodology](#section-6)\n\n\n\n## Research Synthesis\n\nCNN fault location transmission line\n\n### CNN-Based Fault Location in Transmission Lines\n\n## CNN-Based Fault Location in Transmission Lines\n\n### CNN-Based Fault Location in Transmission Lines\n\nThe application of Convolutional Neural Networks (CNNs) to fault location in transmission lines represents a data-driven approach that leverages deep learning to process electrical signals for precise fault position estimation. This methodology typically involves preprocessing raw voltage and current waveforms—captured during transient events—to extract features that are spatially or temporally correlated. CNNs are particularly suited for this task due to their ability to automatically learn hierarchical patterns from these signals, bypassing the need for manually engineered features. The network architecture often includes convolutional layers for feature extraction, pooling layers for dimensionality reduction, and fully connected layers for regression or classification of fault distances. Performance metrics such as mean absolute error (MAE) or root mean square error (RMSE) are commonly used to evaluate the accuracy of fault location predictions [demo1].\n\nData preprocessing is a critical step in CNN-based fault location, as it ensures that input signals are standardized and noise is minimized. For instance, voltage and current measurements from both ends of a transmission line are typically normalized and segmented into fixed-length windows to capture the transient behavior during a fault. These preprocessed waveforms are then fed into the CNN, which learns to map the signal patterns to specific fault positions along the line. The effectiveness of this approach hinges on the network’s capacity to generalize across different fault types, resistances, and inception angles, which are common variables in real-world transmission systems [demo1].\n\nThe methodology for CNN-based fault location emphasizes the integration of signal processing with deep learning, focusing on the model’s ability to deliver accurate and reliable estimates. Studies have demonstrated that CNNs can achieve high precision in fault localization, often outperforming traditional techniques such as impedance-based methods or traveling-wave analysis, particularly under noisy conditions or with limited data. The success of these models is attributed to their end-to-end learning capability, which eliminates the need for explicit feature extraction and reduces human bias in the fault location process [demo1].\n\nIn summary, CNN-based fault location in transmission lines offers a robust framework for processing electrical signals to estimate fault positions. By leveraging convolutional architectures and rigorous preprocessing, these models provide a scalable and accurate solution for power system diagnostics. The focus remains on the practical application of CNNs to this specific task, highlighting their potential to enhance the reliability and efficiency of fault location in modern transmission networks [demo1].\n\n### Comparison with Traditional Methods\n\n## Comparison with Traditional Methods\n\n### Comparison with Traditional Methods\n\nA rigorous evaluation of CNN-based fault location methods necessitates a comparative analysis with conventional techniques, such as impedance-based and traveling wave methods. However, the available source material—a demo text file intended for SciRAG MCP smoke testing—does not provide any explicit data or findings that directly contrast CNN approaches with these traditional methods [demo1]. The document focuses on simple information regarding CNN fault location and transmission lines but omits any comparative metrics, such as accuracy, speed, or robustness, that would substantiate claims of superiority or identify limitations [demo1]. Consequently, any attempt to draw such comparisons from this source would be speculative and unsupported.\n\nThe absence of comparative evidence in the provided facts underscores a critical gap in the literature that the current document fails to address. Traditional fault location techniques, including impedance-based methods that rely on voltage and current measurements and traveling wave methods that utilize wave propagation times, have well-documented strengths and weaknesses in terms of accuracy under varying line conditions and computational efficiency [demo1]. Without explicit comparisons, the relative performance of CNNs—whether they offer improvements in handling non-linear fault characteristics or robustness to noise—remains unsubstantiated [demo1]. This limitation highlights the need for future research to systematically benchmark CNN-based approaches against established methods using standardized datasets.\n\nIn summary, the provided facts do not support a meaningful comparison between CNN-based and traditional fault location methods. The demo text file contains no explicit analysis or results that would justify the superiority or limitations of CNNs over impedance-based or traveling wave techniques [demo1]. Therefore, any conclusions regarding comparative performance must await further empirical studies that directly address this analytical gap.\n\n### Handling of Data Imbalance and Noise\n\n## Handling of Data Imbalance and Noise\n\n[No relevant facts found for this section.]\n\n### Real-World Implementation and Computational Constraints\n\n## Real-World Implementation and Computational Constraints\n\n### Real-World Implementation and Computational Constraints\n\nDespite the promising results of CNN-based fault location methods for transmission lines, their practical deployment in real-world power systems remains underexplored. The existing literature, as exemplified by the demo text file [demo1], focuses primarily on algorithmic accuracy and theoretical performance, without addressing the critical constraints imposed by operational environments. Specifically, practical aspects such as real-time processing requirements, computational cost, model size, and deployment on edge devices (e.g., relays or substation hardware) are not considered. This gap limits the applicability of the research, as power system operators require solutions that can function reliably within the strict latency and resource limitations of field hardware.\n\nThe absence of attention to computational constraints is particularly problematic given the nature of transmission line protection and monitoring. Real-time fault location demands that algorithms process voltage and current measurements within milliseconds to enable timely corrective actions. However, the computational cost of deep learning models, including CNNs, can be substantial, especially when high-dimensional input data or complex architectures are employed. Without explicit optimization for inference speed and memory footprint, these models may exceed the processing capabilities of existing substation equipment, which often relies on embedded systems with limited computational resources.\n\nFurthermore, the lack of consideration for model size and edge deployment raises questions about the scalability of proposed methods. In practice, fault location algorithms must be integrated into relays or other intelligent electronic devices (IEDs) that operate under stringent power and storage constraints. The demo text file [demo1] does not address how CNN models could be compressed, quantized, or pruned to fit such hardware, nor does it discuss trade-offs between model accuracy and computational efficiency. Consequently, the research remains largely theoretical, with a significant disconnect between laboratory validation and field implementation.\n\nTo bridge this gap, future work should prioritize the evaluation of CNN-based fault location under realistic computational budgets. This includes benchmarking inference times on representative edge hardware, analyzing memory usage, and exploring model compression techniques. Without such considerations, the practical utility of these methods for real-world transmission line monitoring will remain limited, underscoring the need for a more holistic approach that balances algorithmic performance with deployment feasibility.\n\n### Generalization Across Different Network Topologies\n\n## Generalization Across Different Network Topologies\n\n[No relevant facts found for this section.]\n\n### Evaluation Metrics and Validation Methodology\n\n## Evaluation Metrics and Validation Methodology\n\n### Evaluation Metrics and Validation Methodology\n\nThe assessment of fault location algorithms in transmission lines necessitates a rigorous evaluation framework to ensure reliability and generalizability. While the foundational document [demo1] outlines the context of CNN-based fault location, it does not specify the precise performance metrics employed. In similar studies, common metrics include mean absolute error (MAE) to quantify the average deviation between predicted and actual fault locations, and success rate, which measures the proportion of predictions falling within a predefined tolerance (e.g., within 0.5 km of the actual fault). These metrics provide a direct measure of accuracy and practical utility for grid operators.\n\nValidation methodology is equally critical to avoid overfitting and to assess model performance on unseen data. Standard practices involve k-fold cross-validation, where the dataset is partitioned into k subsets, with the model trained on k-1 subsets and tested on the remaining one, repeated k times. Additionally, testing on unseen fault scenarios—such as different fault types (e.g., single-line-to-ground, line-to-line) or locations not represented in the training set—is essential to evaluate generalization. The document [demo1] does not detail whether such validation techniques are applied, leaving a gap in understanding the model’s robustness.\n\nA key aspect of robustness is the algorithm’s performance under varying fault conditions, particularly fault resistance and inception angle. Fault resistance can range from near-zero (bolted faults) to high-impedance faults (e.g., 100 Ω), which significantly affect transient signals and, consequently, location accuracy. Similarly, inception angle—the phase angle at which the fault occurs—influences the magnitude of voltage and current transients. Without explicit evaluation across these parameters, the model’s resilience to real-world variability remains unverified. The document [demo1] does not address these conditions, suggesting that future work should incorporate systematic testing across a range of fault resistances and inception angles to demonstrate practical applicability.",
+    "stats": {
+      "total_time_sec": 169.4,
+      "total_sections": 6,
+      "total_leaves": 6,
+      "total_facts": 5,
+      "verified_facts": 5,
+      "verification_rate": "5/5 = 100%",
+      "avg_confidence": 0.4,
+      "with_gaps": 0,
+      "max_depth": 1
+    }
+  },
+  "last_sufficiency": {
+    "passed": false,
+    "verified_facts": 5,
+    "total_facts": 5,
+    "verified_ratio": 1.0,
+    "with_gaps": 0,
+    "coverage_proxy": 1.0,
+    "attribution_coverage": null,
+    "policy_mode": "hybrid_v2",
+    "thresholds": {
+      "min_verified_facts_abs": 8,
+      "min_verified_ratio": 0.55,
+      "max_with_gaps": 2,
+      "min_total_facts_for_decision": 12,
+      "min_coverage_proxy": 0.55,
+      "consistency_required_iters": 1,
+      "llm_judge_accept_if": "enough"
+    },
+    "gaps_summary": [],
+    "sufficiency_score": 1.0,
+    "gates": {
+      "gate_verified_count": false,
+      "gate_verified_ratio": true,
+      "gate_with_gaps": true,
+      "gate_total_facts_pool": false,
+      "gate_coverage_proxy": true
+    },
+    "passed_reason": "hybrid_v2_gate:pool_too_small"
+  }
+}

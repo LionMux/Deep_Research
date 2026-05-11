@@ -1,0 +1,12 @@
+{
+  "paperId": "test_paper",
+  "title": "Test",
+  "year": 2024,
+  "authors": [
+    {
+      "name": "Author"
+    }
+  ],
+  "abstract": "Abstract",
+  "venue": "Venue"
+}

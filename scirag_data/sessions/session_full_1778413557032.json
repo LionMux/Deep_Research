@@ -1,0 +1,186 @@
+{
+  "session_id": "full_1778413557032",
+  "query": "Обзор/сравнение методов fault detection и fault location в power systems (передача/распределение): сигнальные/временные методы (wavelet, STFT, traveling waves), машинное обучение (классификация/регрессия), графовые методы (GNN/GraphCNN), физически-информированные подходы. Сравнить по входным данным, предположениям, вычислительной стоимости, устойчивости к шуму/плохим данным и типичным метрикам. Дай практические рекомендации: когда какой класс методов выбирать и какие датасеты/сценарии чаще всего используют.",
+  "created_at": 1778413557.0323026,
+  "evidence_papers": [
+    "A_Physics-Informed_Data-Driven_Fault_Location_Method_for_Transmission_Lines_Usin_a_physics-informed_data-driven_fault_loc",
+    "Data-Driven_Ground-Fault_Location_Method_in_Distribution_Power_System_With_Distr_data-driven_ground-fault_location_method",
+    "Transmission_Line_Protection_and_Fault_Location_Based_on_Travelling_Wave_Measure_doi_10.5755_j01.eee.19.9.5645",
+    "An_Optimization-Accelerated_Electromagnetic_Time_Reversal-based_Fault_Location_M_an_optimization-accelerated_electromagne",
+    "Abrupt_Change_Detection_in_Power_System_Fault_Analysis_using_Adaptive_Whitening__abrupt_change_detection_in_power_system_",
+    "Fault_Location_Estimation_by_Using_Machine_Learning_Methods_in_Mixed_Transmissio_fault_location_estimation_by_using_machi",
+    "Survey_on_Methods_for_Detection,_Classification_and_Location_of_Faults_in_Power__survey_on_methods_for_detection,_classif",
+    "Martinez_AI_Fault_Survey",
+    "Fault_Location_in_Power_Distribution_Systems_via_Deep_Graph_Convolutional_Networ_fault_location_in_power_distribution_sys",
+    "Chen_GraphCNN_Distribution",
+    "Time_Domain_Differential_Equation_Based_Fault_Location_Identification_in_Mixed_O_time_domain_differential_equation_based_",
+    "Determination_of_Fault_Location_in_Transmission_Lines_with_Image_Processing_and__determination_of_fault_location_in_trans",
+    "Budak_Image_ANN_Fault_Location",
+    "An_Effective_EMTR-Based_High-Impedance_Fault_Location_Method_for_Transmission_Li_an_effective_emtr-based_high-impedance_f",
+    "An_improved_fault_detection_classification_and_location_scheme_based_on_wavelet__doi_10.1186_s40064-015-1342-7",
+    "Fault_Detection_and_Classification_on_a_Transmission_Line_using_Wavelet_Multi_Re_doi_10.5120_7489-0543",
+    "Comparative_Fault_Location_Estimation_by_Using_Image_Processing_in_Mixed_Transmi_comparative_fault_location_estimation_by",
+    "Single_Pole-To-Earth_Fault_Detection_and_Location_on_the_Tehran_Railway_System_U_single_pole-to-earth_fault_detection_and",
+    "Fault_Diagnosis_and_Bad_Data_Detection_of_Power_Transmission_Network_-_A_Time_Do_fault_diagnosis_and_bad_data_detection_o",
+    "Safarishaal_Single_Pole_Earth"
+  ],
+  "evidence_paper_source": [
+    "local_index",
+    "local_index",
+    "local_index",
+    "local_index",
+    "local_index",
+    "local_index",
+    "local_index",
+    "local_index",
+    "local_index",
+    "local_index",
+    "local_index",
+    "local_index",
+    "local_index",
+    "local_index",
+    "local_index",
+    "local_index",
+    "local_index",
+    "local_index",
+    "local_index",
+    "local_index"
+  ],
+  "selected_doc_ids": [
+    "A_Physics-Informed_Data-Driven_Fault_Location_Method_for_Transmission_Lines_Usin_a_physics-informed_data-driven_fault_loc",
+    "Data-Driven_Ground-Fault_Location_Method_in_Distribution_Power_System_With_Distr_data-driven_ground-fault_location_method",
+    "Transmission_Line_Protection_and_Fault_Location_Based_on_Travelling_Wave_Measure_doi_10.5755_j01.eee.19.9.5645",
+    "An_Optimization-Accelerated_Electromagnetic_Time_Reversal-based_Fault_Location_M_an_optimization-accelerated_electromagne",
+    "Abrupt_Change_Detection_in_Power_System_Fault_Analysis_using_Adaptive_Whitening__abrupt_change_detection_in_power_system_",
+    "Fault_Location_Estimation_by_Using_Machine_Learning_Methods_in_Mixed_Transmissio_fault_location_estimation_by_using_machi",
+    "Survey_on_Methods_for_Detection,_Classification_and_Location_of_Faults_in_Power__survey_on_methods_for_detection,_classif",
+    "Martinez_AI_Fault_Survey",
+    "Fault_Location_in_Power_Distribution_Systems_via_Deep_Graph_Convolutional_Networ_fault_location_in_power_distribution_sys",
+    "Chen_GraphCNN_Distribution",
+    "Time_Domain_Differential_Equation_Based_Fault_Location_Identification_in_Mixed_O_time_domain_differential_equation_based_",
+    "Determination_of_Fault_Location_in_Transmission_Lines_with_Image_Processing_and__determination_of_fault_location_in_trans",
+    "Budak_Image_ANN_Fault_Location",
+    "An_Effective_EMTR-Based_High-Impedance_Fault_Location_Method_for_Transmission_Li_an_effective_emtr-based_high-impedance_f",
+    "An_improved_fault_detection_classification_and_location_scheme_based_on_wavelet__doi_10.1186_s40064-015-1342-7",
+    "Fault_Detection_and_Classification_on_a_Transmission_Line_using_Wavelet_Multi_Re_doi_10.5120_7489-0543",
+    "Comparative_Fault_Location_Estimation_by_Using_Image_Processing_in_Mixed_Transmi_comparative_fault_location_estimation_by",
+    "Single_Pole-To-Earth_Fault_Detection_and_Location_on_the_Tehran_Railway_System_U_single_pole-to-earth_fault_detection_and",
+    "Fault_Diagnosis_and_Bad_Data_Detection_of_Power_Transmission_Network_-_A_Time_Do_fault_diagnosis_and_bad_data_detection_o",
+    "Safarishaal_Single_Pole_Earth"
+  ],
+  "selected_chunk_ids": [],
+  "coverage_report": {
+    "overall": {
+      "total_papers_selected": 20,
+      "clusters": 4,
+      "diversity_metrics": {
+        "tag_counts": {
+          "T": 4,
+          "E": 2,
+          "M": 7,
+          "A": 7
+        }
+      }
+    },
+    "clusters": [
+      {
+        "cluster_id": "cluster_T",
+        "cluster_label": "PrimaryTag:T",
+        "paper_ids": [
+          "A_Physics-Informed_Data-Driven_Fault_Location_Method_for_Transmission_Lines_Usin_a_physics-informed_data-driven_fault_loc",
+          "Data-Driven_Ground-Fault_Location_Method_in_Distribution_Power_System_With_Distr_data-driven_ground-fault_location_method",
+          "Transmission_Line_Protection_and_Fault_Location_Based_on_Travelling_Wave_Measure_doi_10.5755_j01.eee.19.9.5645",
+          "An_Optimization-Accelerated_Electromagnetic_Time_Reversal-based_Fault_Location_M_an_optimization-accelerated_electromagne"
+        ],
+        "budget_alloc": 5,
+        "coverage_notes": [
+          "Selected 4 for tag T"
+        ],
+        "gaps_estimate": [
+          "Under-covered tag T: selected 4 vs budget 5"
+        ]
+      },
+      {
+        "cluster_id": "cluster_E",
+        "cluster_label": "PrimaryTag:E",
+        "paper_ids": [
+          "Abrupt_Change_Detection_in_Power_System_Fault_Analysis_using_Adaptive_Whitening__abrupt_change_detection_in_power_system_",
+          "Fault_Location_Estimation_by_Using_Machine_Learning_Methods_in_Mixed_Transmissio_fault_location_estimation_by_using_machi"
+        ],
+        "budget_alloc": 5,
+        "coverage_notes": [
+          "Selected 2 for tag E"
+        ],
+        "gaps_estimate": [
+          "Under-covered tag E: selected 2 vs budget 5"
+        ]
+      },
+      {
+        "cluster_id": "cluster_M",
+        "cluster_label": "PrimaryTag:M",
+        "paper_ids": [
+          "Survey_on_Methods_for_Detection,_Classification_and_Location_of_Faults_in_Power__survey_on_methods_for_detection,_classif",
+          "Martinez_AI_Fault_Survey",
+          "Fault_Location_in_Power_Distribution_Systems_via_Deep_Graph_Convolutional_Networ_fault_location_in_power_distribution_sys",
+          "Chen_GraphCNN_Distribution",
+          "Time_Domain_Differential_Equation_Based_Fault_Location_Identification_in_Mixed_O_time_domain_differential_equation_based_",
+          "Comparative_Fault_Location_Estimation_by_Using_Image_Processing_in_Mixed_Transmi_comparative_fault_location_estimation_by",
+          "Fault_Diagnosis_and_Bad_Data_Detection_of_Power_Transmission_Network_-_A_Time_Do_fault_diagnosis_and_bad_data_detection_o"
+        ],
+        "budget_alloc": 5,
+        "coverage_notes": [
+          "Selected 7 for tag M"
+        ],
+        "gaps_estimate": []
+      },
+      {
+        "cluster_id": "cluster_A",
+        "cluster_label": "PrimaryTag:A",
+        "paper_ids": [
+          "Determination_of_Fault_Location_in_Transmission_Lines_with_Image_Processing_and__determination_of_fault_location_in_trans",
+          "Budak_Image_ANN_Fault_Location",
+          "An_Effective_EMTR-Based_High-Impedance_Fault_Location_Method_for_Transmission_Li_an_effective_emtr-based_high-impedance_f",
+          "An_improved_fault_detection_classification_and_location_scheme_based_on_wavelet__doi_10.1186_s40064-015-1342-7",
+          "Fault_Detection_and_Classification_on_a_Transmission_Line_using_Wavelet_Multi_Re_doi_10.5120_7489-0543",
+          "Single_Pole-To-Earth_Fault_Detection_and_Location_on_the_Tehran_Railway_System_U_single_pole-to-earth_fault_detection_and",
+          "Safarishaal_Single_Pole_Earth"
+        ],
+        "budget_alloc": 5,
+        "coverage_notes": [
+          "Selected 7 for tag A"
+        ],
+        "gaps_estimate": []
+      }
+    ]
+  },
+  "config_snapshot": {
+    "target_papers": 20,
+    "coverage_mode": "balanced",
+    "style": "engineer",
+    "max_sections": 4,
+    "verification_level": "basic",
+    "freshness": "local_only",
+    "session_store": "in_memory",
+    "random_seed": 42,
+    "sufficiency_policy": {
+      "mode": "hybrid_v2",
+      "thresholds": {
+        "min_verified_facts": 8,
+        "min_coverage_sentences": 0.55,
+        "max_gaps": 2,
+        "min_sentence_pool": 12,
+        "min_coverage_proxy": 0.55,
+        "consistency_required_iters": 1,
+        "llm_judge_accept_if": "enough"
+      },
+      "score_weights": {
+        "w_verified_ratio": 0.45,
+        "w_with_gaps": 0.35,
+        "w_coverage_proxy": 0.2
+      }
+    },
+    "evidence_version": "a00d5041d2d3efeea1700a148ba6606305467cd4d67ee2fed6098501e9f0c072"
+  },
+  "synthesis": {},
+  "last_sufficiency": {}
+}

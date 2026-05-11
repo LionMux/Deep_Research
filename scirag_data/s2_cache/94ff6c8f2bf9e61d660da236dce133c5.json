@@ -1,0 +1,144 @@
+{
+  "papers": [
+    {
+      "paperId": "ac6fcfa6e5d252d8503a57e7166b8f98f94bbb37",
+      "externalIds": {
+        "ArXiv": "2604.17458",
+        "CorpusId": 287635635
+      },
+      "url": "https://www.semanticscholar.org/paper/ac6fcfa6e5d252d8503a57e7166b8f98f94bbb37",
+      "title": "EHRAG: Bridging Semantic Gaps in Lightweight GraphRAG via Hybrid Hypergraph Construction and Retrieval",
+      "venue": "",
+      "year": 2026,
+      "citationCount": 0,
+      "openAccessPdf": {
+        "url": "",
+        "status": null,
+        "license": null,
+        "disclaimer": "Notice: Paper or abstract available at https://arxiv.org/abs/2604.17458, which is subject to the license by the author or copyright owner provided with this content. Please go to the source to verify the license and copyright information for your use."
+      },
+      "authors": [
+        {
+          "authorId": "2292057912",
+          "name": "Yifan Song"
+        },
+        {
+          "authorId": "2265583842",
+          "name": "Xingjian Tao"
+        },
+        {
+          "authorId": "50109597",
+          "name": "Zhicheng YANG"
+        },
+        {
+          "authorId": "2265724299",
+          "name": "Yihong Luo"
+        },
+        {
+          "authorId": "2285394426",
+          "name": "Jing Tang"
+        }
+      ],
+      "abstract": "Graph-based Retrieval-Augmented Generation (GraphRAG) enhances LLMs by structuring corpus into graphs to facilitate multi-hop reasoning. While recent lightweight approaches reduce indexing costs by leveraging Named Entity Recognition (NER), they rely strictly on structural co-occurrence, failing to capture latent semantic connections between disjoint entities. To address this, we propose EHRAG, a lightweight RAG framework that constructs a hypergraph capturing both structure and semantic level relationships, employing a hybrid structural-semantic retrieval mechanism. Specifically, EHRAG constructs structural hyperedges based on sentence-level co-occurrence with lightweight entity extraction and semantic hyperedges by clustering entity text embeddings, ensuring the hypergraph encompasses both structural and semantic information. For retrieval, EHRAG performs a structure-semantic hybrid diffusion with topic-aware scoring and personalized pagerank (PPR) refinement to identify the top-k relevant documents. Experiments on four datasets show that EHRAG outperforms state-of-the-art baselines while maintaining linear indexing complexity and zero token consumption for construction. Code is available at https://github.com/yfsong00/EHRAG."
+    },
+    {
+      "paperId": "fa27b5c4e6b91ab9141cfd9f5699ef505f146000",
+      "externalIds": {
+        "ArXiv": "2604.15951",
+        "CorpusId": 287607373
+      },
+      "url": "https://www.semanticscholar.org/paper/fa27b5c4e6b91ab9141cfd9f5699ef505f146000",
+      "title": "Integrating Graphs, Large Language Models, and Agents: Reasoning and Retrieval",
+      "venue": "",
+      "year": 2026,
+      "citationCount": 0,
+      "openAccessPdf": {
+        "url": "",
+        "status": null,
+        "license": null,
+        "disclaimer": "Notice: Paper or abstract available at https://arxiv.org/abs/2604.15951, which is subject to the license by the author or copyright owner provided with this content. Please go to the source to verify the license and copyright information for your use."
+      },
+      "authors": [
+        {
+          "authorId": "2351812647",
+          "name": "Hamed Jelodar"
+        },
+        {
+          "authorId": "2354559964",
+          "name": "Samita Bai"
+        },
+        {
+          "authorId": "2351805988",
+          "name": "Mohammad Meymani"
+        },
+        {
+          "authorId": "2344830730",
+          "name": "Parisa Hamedi"
+        },
+        {
+          "authorId": "1403021821",
+          "name": "R. Razavi-Far"
+        },
+        {
+          "authorId": "2328010967",
+          "name": "Ali A. Ghorbani"
+        }
+      ],
+      "abstract": "Generative AI, particularly Large Language Models, increasingly integrates graph-based representations to enhance reasoning, retrieval, and structured decision-making. Despite rapid advances, there remains limited clarity regarding when, why, where, and what types of graph-LLM integrations are most appropriate across applications. This survey provides a concise, structured overview of the design choices underlying the integration of graphs with LLMs. We categorize existing methods based on their purpose (reasoning, retrieval, generation, recommendation), graph modality (knowledge graphs, scene graphs, interaction graphs, causal graphs, dependency graphs), and integration strategies (prompting, augmentation, training, or agent-based use). By mapping representative works across domains such as cybersecurity, healthcare, materials science, finance, robotics, and multimodal environments, we highlight the strengths, limitations, and best-fit scenarios for each technique. This survey aims to offer researchers a practical guide for selecting the most suitable graph-LLM approach depending on task requirements, data characteristics, and reasoning complexity."
+    },
+    {
+      "paperId": "15992b3e3da58aed04d549af7a0e636bb3177a1d",
+      "externalIds": {
+        "ArXiv": "2604.15676",
+        "CorpusId": 287607686
+      },
+      "url": "https://www.semanticscholar.org/paper/15992b3e3da58aed04d549af7a0e636bb3177a1d",
+      "title": "EvoRAG: Making Knowledge Graph-based RAG Automatically Evolve through Feedback-driven Backpropagation",
+      "venue": "",
+      "year": 2026,
+      "citationCount": 0,
+      "openAccessPdf": {
+        "url": "",
+        "status": null,
+        "license": null,
+        "disclaimer": "Notice: Paper or abstract available at https://arxiv.org/abs/2604.15676, which is subject to the license by the author or copyright owner provided with this content. Please go to the source to verify the license and copyright information for your use."
+      },
+      "authors": [
+        {
+          "authorId": "2269758399",
+          "name": "Zhenbo Fu"
+        },
+        {
+          "authorId": "2281507116",
+          "name": "Yuan Zhang"
+        },
+        {
+          "authorId": "30785202",
+          "name": "Qiange Wang"
+        },
+        {
+          "authorId": "2267905423",
+          "name": "Hao Yuan"
+        },
+        {
+          "authorId": "2317634013",
+          "name": "Yuehao Xu"
+        },
+        {
+          "authorId": "2351958343",
+          "name": "Enze Yi"
+        },
+        {
+          "authorId": "2267859752",
+          "name": "Yanfeng Zhang"
+        },
+        {
+          "authorId": "2323319407",
+          "name": "Ge Yu"
+        }
+      ],
+      "abstract": "Knowledge Graph-based Retrieval-Augmented Generation (KG-RAG) has emerged as a promising paradigm for enhancing LLM reasoning by retrieving multi-hop paths from KGs. However, existing KG-RAG frameworks often underperform in real-world scenarios because the pre-captured knowledge dependencies are not tailored to the downstream task or its evolving requirements. These frameworks struggle to adapt to task-specific requirements and lack mechanisms to filter low-contribution knowledge during generation. We observe that feedback on generated responses offers effective supervision for improving KG quality, as it directly reflects user expectations and provides insights into the correctness and usefulness of the output. However, a key challenge lies in effectively linking response-level feedback to triplet-level contribution evaluation and knowledge updates in the KG. In this work, we propose EvoRAG, a self-evolving KG-RAG framework that leverages the feedback over generated responses to continuously refine the KG and enhance reasoning accuracy. EvoRAG introduces a feedback-driven backpropagation mechanism that attributes feedback to retrieved paths by measuring their utility for response and propagates this utility back to individual triplets, supporting fine-grained KG refinements towards more adaptive and accurate reasoning. Through EvoRAG, we establish a closed loop that couples feedback, LLM, and graph data, continuously enhancing the performance and robustness in real-world scenarios. Experimental results show that EvoRAG improves reasoning accuracy by $7.34\\%$ over state-of-the-art KG-RAG frameworks. The source code has been made available at https://github.com/iDC-NEU/EvoRAG."
+    }
+  ],
+  "total": 0
+}

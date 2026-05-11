@@ -1,0 +1,1338 @@
+1
+Real-time Faulted Line Localization and PMU
+Placement in Power Systems through Convolutional
+Neural Networks
+Wenting Li, Student Member, IEEE , Deepjyoti Deka, Member, IEEE ,
+Michael Chertkov, Senior Member, IEEE , Meng Wang, Member, IEEE ,
+Abstract —Diverse fault types, fast re-closures, and complicated
+transient states after a fault event make real-time fault location
+in power grids challenging. Existing localization techniques in
+this area rely on simplistic assumptions, such as static loads, or
+require much higher sampling rates or total measurement avail-
+ability. This paper proposes a faulted line localization method
+based on a Convolutional Neural Network (CNN) classiﬁer using
+bus voltages. Unlike prior data-driven methods, the proposed
+classiﬁer is based on features with physical interpretations that
+improve the robustness of the location performance. The accuracy
+of our CNN based localization tool is demonstrably superior to
+other machine learning classiﬁers in the literature. To further
+improve the location performance, a joint phasor measurement
+units (PMU) placement strategy is proposed and validated against
+other methods. A signiﬁcant aspect of our methodology is that
+under very low observability ( 7%of buses), the algorithm is still
+able to localize the faulted line to a small neighborhood with high
+probability. The performance of our scheme is validated through
+simulations of faults of various types in the IEEE 39-bus and 68-
+bus power systems under varying uncertain conditions, system
+observability, and measurement quality.
+Index Terms —Fault Location, Deep Learning, Phasor Mea-
+surement Unit (PMU), Real-Time, PMU Placement, Feature
+Extraction
+I. I NTRODUCTION
+System restoration in large-scale power grids needs methods
+to locate and isolate the faulted lines efﬁciently. While circuit
+breakers and relays are widely applied to check the status of
+transmission lines, their mis-operation occasionally happens
+and has in the past caused severe cascading failures or black-
+outs, as reported in the 2003 blackout analysis in America
+[1]. This motivates the development of intelligent monitoring
+systems in addition to the traditional methods. Among others,
+data-driven methods for monitoring and localization now can
+be implemented due to the placement of wide-area measure-
+ment devices, like phasor measurement units (PMUs) in the
+North American grid, that generate high-resolution data [2].
+Fault location methods are used to pinpoint the fault point
+in the faulted lines. Prior methods in this context can be
+W. Li, M. Wang are with the Dept. of Electrical, Computer, and Systems
+Engineering, Rensselaer Polytechnic Institute, Troy, NY . Email: fliw14,
+wangm7g@rpi.edu.
+D. Deka and M. Chertkov are with the Theory Division and the Center for
+Nonlinear Studies, Los Alamos National Laboratory, Los Alamos, NM. Email:
+fdeepjyoti, chertkovg@lanl.gov. This research is supported in part by ARO
+W911NF-17-1-0407 and the Center for Future Energy Systems (CFES) and
+the Department of Energy through the Grid Modernization Lab Consortium
+and the Center for Non-Linear Studies (CNLS) at Los Alamos National
+Laboratory.categorized into two classes: 1) conventional, and 2) wide-
+area algorithms. The conventional algorithms for use in one-
+end, double-end and multi-end transmission lines include
+impedance-based, traveling-wave based and artiﬁcial intelli-
+gent methods [3]–[8]. The impedance-based method computes
+the fault currents according to the measured voltages and
+known bus impedance and then determines the fault distance to
+the measured point using distributed parameters [3]–[5]. Such
+methods assume static loads and are sensitive to the values of
+line parameters. Traveling-wave based approaches have been
+applied to locate faults in the power system since the 1950s,
+by relating the time difference of traveling-wave propagating
+to the terminal buses to localizing the fault point. These
+approaches require high accuracy of time synchronization and
+a high sampling rate of measurements, and that restrict their
+usage [6], [7]. Finally, artiﬁcial intelligence based methods
+train neural networks (NN) or support vector machines (SVM)
+with the extracted features from collected measurements. Gen-
+erally, the raw data need to be pre-processed through Fourier
+or wavelet transformation, and the coefﬁcients or fundamental
+components of the transformed data are treated as features [8],
+[9]. Due to the transformation, the requirement of sampling
+rate is high, like 1kHz, which is far beyond the capability
+of PMUs. Further, the majority of conventional methods in
+the literature require at least one terminal buses of each line
+to be measured, and hence are not suitable for large-scale
+power system where only a limited number of PMU are
+installed. To overcome the issues of localizing faults with non-
+ubiquitous PMUs, wide-area algorithms have been proposed
+using information collected, not just locally but from the
+overall geographical network.
+For the wide-area methods, the faulted line is ﬁrst localized
+(either exactly or approximately), and then the exact position
+along the line is determined at a second stage [10]–[13]. The
+ﬁrst stage itself is challenging due to the large number of
+candidate lines and limited measurements. In [10], the residual
+between the estimated and measured voltages variations is
+computed for each transmission line to determine the one
+with minimum residual (faulted line), and then the positive
+and negative network parameters are employed to further
+determine the position of the fault point. Note that this method
+is computationally expensive as all lines need to be examined.
+The authors in [11], [12] largely reduce the computational
+complexity by formulating the search process into a sparse
+optimization problem, and the values larger than a pre-deﬁnedarXiv:1810.05247v2  [cs.SY]  17 May 2019
+2
+threshold indicate the faulted area. These methods achieve
+small fault distance errors with high-resolution measurements
+(more than 2000 Hz) under the low level of noise, and the
+robustness to random load ﬂuctuations and the inaccurate
+voltage measurements is lack of analysis.
+In addition, traveling-wave based methods using wide-area
+measurements have been proposed, but their high sampling
+rate (1 MHz) increases the cost of installing devices in a large-
+scale system [13]. It is worth mentioning that a parallel line
+of work on line outage localization for state estimation or
+topology estimation [14] based on direct current (DC) power
+ﬂow models exist. Such works, however, assume small load
+variations and only employ steady state measurements, and
+hence have restricted usage compared to our and other works
+that study real-time localization with transient measurements.
+This paper concentrates on the ﬁrst stage of fault local-
+ization problem, i.e., on the issue of locating the faulted
+lines or faulted area, in particular in the regime of limited
+measurement availability. This paper deﬁnes the feature vector
+according to the substitution theory, and design a four-layer
+CNN classiﬁer to locate the faulted line, and then propose
+a joint PMU placement algorithm to improve the location
+performance further. The main contributions are summarized
+from four aspects: 1) The feature vector with clear physical
+interpretations is deﬁned (Section II-B). With this feature as
+input, the complexity of the CNN classiﬁer is largely reduced,
+compared with the classic ones with millions of parameters
+[15], [16]. Moreover, faults can be located within the small
+neighborhood of the faulted point when a limited number of
+buses are measured (Section V-D and V-E). 2) The four-layer
+CNN classiﬁer is motivated due to the property of sparse
+connectivity and capturing local features (Section III). The
+advantages of CNN are illustrated by the comparison with
+other types of classiﬁers (Section V-C). 3) A PMU placement
+algorithm is proposed based on the loss function of the CNN
+classiﬁer, and its localization performance is shown to be
+improved compared with other random or topology-based
+methods (Section IV and V-F). 4) The signiﬁcance of the
+localization scheme lies in its robustness to practical scenarios
+with differing load variations (Section V-G), noise (Section
+V-H), and voltage quality (Section V-I).
+The remaining parts are organized as follows: the two
+main components of the proposed method are physically
+interpretable feature extraction and CNN based classiﬁcation,
+respectively explained in Section II and III. The structure
+of the CNN is described, and the motivations are itemized.
+Section IV explains the proposed algorithm to utilize the
+CNN classiﬁcation into determining the PMU placement. The
+numerical results in Section V validate the proposed method
+both in the IEEE 39-bus and 68-bus power systems. Then
+Section VI concludes results and discusses future research.
+II. F EATURE EXTRACTION FOR FAULTED LINE
+LOCALIZATION
+We consider a power grid of nbuses (see Fig. 1) with a
+single line fault that may either be one of the following: three-
+phase short circuit (TP), line to ground (LG), double line toNOMENCLATURE
+U0;I0Bus voltages and currents before faults
+U0;I0Bus voltages and currents during faults
+Uf;If The voltage and current of the fault point
+Y0;Y0Admittance matrix before and during faults
+YFAdmittance matrix including the fault point during faults
+IuThe unbalanced current
+ jThejth feature vector when all buses are measured
+ jThejth feature vector when partial buses are measured
+yjThe label of the jth dataset
+Wk;Ck The kernel and output of the kth convolutional layer
+Rk The output of the kth Rectiﬁed Linear Unit (ReLU) layer
+Pk The output of the kth pooling layer
+~P The vectorization of the output of the last pooling layer
+y The estimated probability of all the possible lines by the CNN
+Wo;Bo The weight and bias matrices of the output layer
+ The set of all the parameters learned by the CNN
+ The regularization coefﬁcient
+S The set of measured buses
+K The number of measured buses
+di The degree of the ith bus
+ The weight coefﬁcient
+Wi
+NNThe weight matrix of the ith layer of NN
+Bi
+NNThe bias matrix of the ith layer of NN
+ground (DLG) and line to line (LL) faults. Assuming that fault
+detection through known techniques [17] is successful, we are
+interested in real-time localization of the faulted line using
+PMU measurements collected before and during the fault from
+a subset of the grid buses. The main idea is to extract features
+that characterize the location, and then classify all possible
+lines with the features. We now describe the selection of the
+physical model driven feature vector  , ﬁrst under complete
+and then under partial system observability. Note : Vectors are
+marked as bold font or ~and the real number and complex
+number sets are respectively represented by RandC.
+A. Substitution Theory and Features for Full Observability
+In the case of a n-bus power system without un-transposed
+lines1, we apply the substitution theory [18] to derive the
+equations related to pre and during-fault system variables.
+Given that three-phase measurements may not be available
+from all the meters, we use only positive sequence data to
+represent the quantities.
+In the steady state regime prior to the fault, bus voltages
+U02Cn1= [U0
+1;;U0
+n]T, currentsI02Cn1=
+[I0
+1;;I0
+n]Tand bus admittance matrix Y02Cnnsatisfy
+the Ohm’s law in (1), where the jth entry in the ith row of
+Y0isY0
+ij;i;j = 1;;n, denoting the admittance between
+the busiandj,.
+I0=Y0U0(1)
+When the line between the bus iandjis faulted at point F,
+the during-fault admittance matrix, YF2C(n+1)(n+1), with
+1The un-transposed lines have different mutual impedance between buses
+and are beyond our analysis.
+3
+the fault point F as the (n+ 1)th node can be constructed as
+YF=2
+66666666664Y11   Y1;n
+    
+Y0
+iiY0
+ij
+    
+Y0
+jiY0
+jj
+    
+Yn;1   Yn;nyf1
+yT
+f1yf23
+77777777775=Y0yf1
+yT
+f1yf2
+;
+(2)
+whereY02Cnnis the during-fault admittance matrix of n
+buses, yf1= [YF
+1;n+1;;YF
+n;n+1]T2Cn1is the admittance
+between the F and other buses, yf2=YF
+n+1;n+12Cis the
+self-admittance of the faulted point F.
+During-fault current and voltage I02Cn1;U02Cn1of
+buses, the fault point current and voltage If;Ufsatisfy
+I0
+If
+=YFU0
+Uf
+=Y0yf1
+yT
+f1yf2 U0
+Uf
+; (3)
+)I0=Y0U0+yf1Uf (4)
+Replacing the Y0byY0=Y0 Yu, whereYuis a 4-sparse2
+matrix that only has four nonzero entries Yu
+ii=Yii Y0
+ii;Yu
+ij=
+Yij Y0
+ij;Yu
+ji=Yji Y0
+ji;Yu
+jj=Yjj Y0
+jj, we obtain
+I0= (Y0 Yu)U0+yf1Uf=Y0U0 Iu(5)
+where the unbalanced current Iu=YuU0 yf1Ufis a
+2-sparse vector with nonzero entries Iu
+i;Iu
+jgiven in (6).
+Notice that these nonzero entries are just the terminal buses
+i;jof the faulted line.
+Iu
+i= (Y0
+ii Y0
+ii)U0
+i+ (Y0
+ij Y0
+ij)U0
+j Y0
+i(n+1)U0
+n+1 (6)
+Iu
+j= (Y0
+ji Y0
+ji)U0
+i+ (Y0
+jj Y0
+jj)U0
+j Y0
+j(n+1)U0
+n+1(7)
+If we deﬁne variations of voltage and current as U=
+U0 U0,I=I0 I0and combine (1) and (5), then their
+relationships with the pre-fault admittance Y0become:
+Y0U= Iu+ I (8)
+The feature vector  2Cn1is deﬁned according to (9)
+in terms of the bus voltages variations Ubefore and during
+the faults and the admittance matrix Y0before the faults
+ =Y0U: (9)
+Because both imaginary and real parts of  can reﬂect the
+location, and the imaginary parts show a better performance
+in a large number of classiﬁcation experiments, we choose the
+imaginary part  as the feature input to the classiﬁer to avoid
+unnecessary complication.
+B. Physical Interpretation of the Features
+The physical interpretation of  is revealed by the two
+components in (8). The dominant element is Iu, which is a
+2-sparse vector with nonzero values exactly corresponding to
+the terminal buses of the faulted line. Distribution of the  ’s
+entries is indicative of the faulted line location.
+2k-sparsity means there are only knonzero entries.
+60
+96129 28
+27268
+25 531
+2112
+3 18 17
+16 24
+1922
+658
+7592345620
+55715
+14 4
+5 8
+6
+7
+25411 1312
+3551030
+9
+3647 48 406614
+41
+106231
+6311
+32
+33
+343846
+35
+1264
+37
+1365 4344
+3945
+52
+166842
+156749
+51
+50
+A31 Generator  1
+Load
+TransformerA4A5
+A2A1Fig. 1: IEEE 68-bus system with ﬁve coherence groups [19].
+1) Feature Extraction under Full Measurements: Consider
+the line between bus iandjas faulted. The kth (k6=i;j)
+entry kis not related directly to the faulted line,
+ k= Ik+ Iu
+k= l2NkY0
+klUl= l2NkIkl (10)
+whereNkdenotes the neighbor of the bus k, andIklis the line
+currents between the bus kandl. Therefore,  kis nonzero if
+line currents variations in its neighborhood are nonzero. The
+minor components in Iare therefore useful indicators in
+the neighborhood of the faulted line. (This conjecture will be
+post-factum validated below.)
+2) Feature Extraction under Partial Observability: Assume
+that onlys<n buses in the setSare measured, and their pre-
+fault and during-fault voltages are provided, then we derive at
+the observed buses, U=U0 U0. The feature vector  2Cn
+obtained from the data measured by the sbuses is deﬁned as:
+ =Y0U (11)
+where Y02Cnsdenotes the submatrix of the pre-fault
+admittance matrix between all the nbuses, and the smeasured
+buses, Udenotes the voltage variations measured by the s
+buses, and the kth entry of  can be interpreted as
+ k= p2(S\N k)Y0
+kpUp= p2S\N kIkp (12)
+whereY0
+kpdenotes the kth row andpth column of Y0,Up
+is thepth entry of U, and Ikpis the line current variations
+between the buses kandp. Thus is a sparse vector, and the
+nonzero entries of  are the buses that are in the neighborhood
+of the measured buses, where the neighborhood represents
+those buses directly connected with the measured buses.
+3) Numerical Example: We simulate in the power system
+toolbox (PST), based on nonlinear models [20], a three-phase
+short circuit fault lasting 0.2 seconds at the line 5-6 in the
+IEEE 68-bus power system. The feature vector  is computed
+according to (9). The imaginary parts of Iuand 2C681
+shown in Fig. 2 demonstrate that Iuis a sparse vector with
+nonzero entries corresponding to the two terminal buses (5 and
+6) of the faulted line, while  5and 6have relatively large
+values than others. Meanwhile, some other buses have nonzero
+values as their voltages change during the fault period.
+The main reason to select  rather than Iuas the feature
+vector is that otherwise, measurements of all buses need to be
+known to ensure the nonzero entries of Iuare included, but
+in reality not all the buses are measured by PMUs.
+4
+Bus Index
+Bus Index
+Fig. 2: The imaginary parts of the unbalanced currents Iu(left)
+and of the feature vector  i;i= 1;;68(right) after a three-
+phase short circuit fault on the line 5-6 in Fig. 1
+After representing all faults in the dataset by their feature
+vectors, we label them by their locations. For the system of
+mlines, we label the dataset into (m+ 1) classes with the
+(m+ 1) th class denoting the normal condition. In the next
+Section, we examine the performance of the classiﬁer.
+III. C LASSIFICATION
+Deep/machine learning has produced encouraging improve-
+ments in the ﬁelds of computer vision [15], natural language
+[16] and speech recognition [21], through the selection of
+correct data-features. With features  extracted for locating
+faulted lines, many classiﬁers, e.g., SVM and fully-connected
+NN, can be applied [22]. CNN classiﬁer is preferred consider-
+ing its property of sparse connectivity and parameter sharing
+[23], and the experimental results in Section V-C indicate the
+advantages of CNN.
+A. Architecture Design
+Although there is no uniform way of designing the structure
+of CNN, and novel architectures are frequently proposed,
+several basic components are typically considered together for
+better classiﬁcation accuracy in a wide range of applications.
+These components include convolutional, Rectiﬁed Linear
+Unit (ReLU), Pooling, and fully connected operators. The size
+of the kernel matrices in these operators and the number of
+layers are hyper-parameters that are designed to ﬁt the input.
+In this manuscript, we follow the common practical suggestion
+- to adopt a scheme which has already shown a competitive
+advantage in other applications. We build our classiﬁer based
+on the AlexNet model [15].
+We input the imaginary parts of the extracted feature vectors
+ jand labelsyj;j= 1;;N, then the CNN optimizes all
+the parameters layer by layer.
+Let the input of the kth convolutional layer ( k= 1;;l)
+beXk2Rwkhkdk, then the feature vector  jof thejth
+dataset is the input of the ﬁrst layer X1= j.
+Cj
+k=Xk
+Wk; (13)
+where the output of the kth convolutional layer is Cj
+k, which
+is locally connected with the entries of Xkthrough kernels
+Wk2Rck;rk;mkby the convolution operator 
+in (13) [23].
+These kernels element-wise multiply local parts of Xkand also
+move with the user-deﬁned stride size over the entire input Xk.
+To maintain uniform operations in boundary elements, zeros
+may be padded to Xk.
+Rj
+k= max(Cj
+k;0) (14)The convolutional layer is followed by the non-linear ReLU
+activation function in (14), which discards the negative items
+ofCj
+kwithout changing the size.
+Pj
+k=Pooling (Rj
+k) (15)
+To reduce the size of the input at the next layer, the max
+pooling operator is applied to Rj
+kin (15). Kernels in the pool-
+ing operator pick the maximum within a small neighborhood
+ofRj
+kand then move to the next neighborhood with a user-
+deﬁned stride similar to the convolution operator. Likewise,
+the user also can pad the Rj
+kwith zeros to make sizes of the
+neighborhood and of the kernel equal.
+ThePj
+kis delivered to the next layer as input Xk+1=Pj
+k.
+Applying these operators from (13) to (15) in all the llayers,
+the ﬁnal output Pj
+lis vectorized into a long vector ~Pj,
+yj=g(WT
+o~Pj+Bo) (16)
+whereWo;Boare the weight and the bias matrices in the
+output layer respectively, and g()is the softmax function
+g(x) =ex
+1+ex.~Pjis fully connected with the output probability
+yj
+i;i= 1;;mofmlines by (16). The line with the highest
+probability determines the output class or the fault location.
+...
+...1jy
+j
+myj2jy ... ......
+Convolutional +Relu+Pooling Input    VectorOutput of each layer1st Layer
+2nd  Layer
+3rd  Layer4th  Layer
+Fig. 3: The structure of the proposed CNN
+B. Training Process
+We denote the set of all the CNN parameters . The
+optimal is found by minimizing a loss function. Interpreting
+the output of different classes related to different lines as
+probabilities of a fault, the cross-entropy loss function [23]
+together with a regularization term kk2
+Fto avoid overﬁtting
+is the common recipe (17):
+l(;S) =1
+NN
+j=1n
+i=1yj
+ilogf;S( j) +kk2
+F (17)
+whereSis the set of measured buses,  jis deﬁned in (11)
+withs2S,yj
+i2Rmis unity if the label of the j-th dataset
+isi, and it is zero otherwise, and yj
+i=f;S( j)is the
+output probability of CNN for the fault location of the j-th
+dataset to be at line i.f;S()denotes functions of (13) (16)
+parameterized by given the setSto estimate the probability.
+is the regularization coefﬁcient. Notice that the set Sis ﬁxed
+after the measured buses are determined through some PMU
+placement methods.
+To solve this optimization problem, the stochastic gradient
+descent method or some of its extensions like Adam [24] and
+RMSprop [25], are shown to achieve high classiﬁcation accu-
+racy in many tests. Although rigorous convergence proofs of
+5
+gradient-descent based methods are lacking, many techniques
+are useful in reducing the effects of initial conditions and
+also improving the classiﬁcation accuracy. For example, “early
+stopping” is a convergence criterion to avoid over-ﬁtting, and
+“batch normalization” is effective to the issue of covariance
+shift [26].
+C. Motivations of Applying CNN Classiﬁer
+CNN is preferred mainly considering three reasons: (1) The
+convolution operation in CNN generates sparse connectivity
+between the entries of different layers [23], which is more
+suitable than the fully connected operation for the sparse
+vector  (explained in Section II-B). (2) CNN reveals the local
+features [23]. The small size of the kernels strengthens CNN
+to learn the local features instead of the global features. As
+the neighborhood property of  (presented in Section II-B)
+illustrates the local characteristics, CNN has the advantages
+of learning the neighborhood property from the input. (3)
+In addition, the experimental comparison results (discussed
+in Section V-C) of different classiﬁers further conﬁrm our
+analysis, and the CNN shows the advantages especially when
+the system is partially measured.
+In the next Section, we describe how correct PMU place-
+ment helps to reduce fault localization error with partial
+observability and improves the performance of the CNN.
+IV. PMU P LACEMENT FOR FAULTED LINELOCALIZATION
+UNDER PARTIAL OBSERVABILITY
+Algorithm 1 Greedy Algorithm for PMU Placement
+1:Input:K;yj; j;di;;S0;j2[1;N];i2[1;n]
+2:Initialize :S=S0;l=1
+3:whilejSjis less than Kdo
+4: forbusi =2S do
+5: LetSi=fS[ig, and compute the loss function
+li= min l(;Si)
+6: end for
+7:i= arg min i(
+di+li), wherediis the degree of bus
+i,is a weight coefﬁcient.
+8: ifli<lthen
+9:S=Si;l=li
+10: end if
+11:end while
+12:Output:S
+If the number of PMUs is limited, their correct placement
+can play a signiﬁcant role in keeping the quality of the fault
+localization algorithm described in preceding Section III. In
+this Section, we propose a greedy algorithm to place KPMUs.
+PMU placement algorithms discussed in the literature, e.g.,
+[12], [27], are devised to guarantee full system observability.
+However, locating faults may work well with some but not
+necessarily complete observability. Since the accuracy of lo-
+calizing the faulted line in our case is determined by the loss
+function in (17), we suggest optimizing PMU placement (set
+S) to reduce the loss function of (18).
+min
+;Sl(;S) (18)
+s.t.jSj=K (19)We propose a data-driven placement algorithm that is aware
+of both the fault localization and the learning mechanism
+(optimization of the loss function of CNN). To optimize
+the PMU placement for fault location, the optimal set S
+can be obtained by minimizing loss function (18) satisfying
+(19) during the training stage. The regularization item kk2
+F
+reduces the model complexity by creating a parameter set 
+of a small norm.
+To ﬁnd the optimal set Sof sizeKis an NP-complete
+problem, thus we propose an algorithm to greedily increase
+the number of measured buses until the total number Kis
+reached in Algorithm 1.
+Given the total number of measured buses K, this algorithm
+greedily increases the size of the set Sfrom the initial set S0
+one by one until K, whereS0includes a few buses having the
+largest degree dior being signiﬁcantly crucial. For each step,
+the setSis updated by adding the ith bus that minimizes
+the loss function liplus the item of =di. Note that the
+item=diis added to the loss function to account for the
+effect of grid topology in determining the selected bus. The
+weight coefﬁcient 2(0;1)adjusts the signiﬁcance of the bus
+degree and of the loss function to prioritize the buses with a
+large degree. This item takes effect obviously when the set
+Sis large, and the difference of the loss function libecomes
+small. Meanwhile, a number of experimental results show that
+adding a bus with more considerable degree tends to have
+better performances. Based on all of the above, our algorithm
+tries to enforce the selected buses to achieve a larger degree by
+minimizing the loss function augmented with the =diitem.
+V. N UMERICAL RESULTS
+Four types of line faults, including three-phase short circuit
+(TP), line to ground(LG), double line to ground (DLG) and
+line to line (LL) faults are simulated through PST [20]. The
+initial active and reactive loads z2R2nare drawn from
+the Gaussian distribution N(;"I)with mean2R2nand
+covariance matrix 2R2n2n, where the mean value of the
+loadis from the standard dataset and the covariance matrix
+is deﬁned as "Iwith"= 1. The fault impedance changes
+in the range of 0.0001 to 0.1 per unit (p.u.), and the fault is
+cleared after 0.2 seconds [28]. The fault location performance
+is evaluated by the location accuracy rate ( LAR )deﬁned in
+(20). The data rate of PMU is 60 samples per second.
+=The number of faults correctly located
+total number of faults(20)
+The proposed approach is validated both in the IEEE 39-bus
+and the IEEE 68-bus power systems. Two CNN classiﬁers are
+constructed for these systems respectively. The LARs of both
+systems are demonstrated when the test system is partially
+measured by 15% to 30% of buses. The misclassiﬁed faults
+of these two systems are analyzed respectively. Notice that
+the measured buses are selected by the proposed PMU place-
+ment algorithm in Section IV. Subsequently, more extensive
+properties of the proposed methods are tested in the IEEE 68-
+bus power system from Section V-C to Section V-I, involving
+the comparison of different classiﬁers, comparison of different
+PMU placement algorithms, and the robustness to uncertainty,
+low quality of measurements and noise.
+6
+A. Performances of 39-bus Test Cases under Partial Observ-
+ability
+Table I: The structural parameters of the CNN for the 39-bus power
+system
+Layer Type Operator Kernel Output
+The1stConvolution 4 @ 3 4 @ 37
+Convolutional Max Pooling 2 1 4 @ 19
+The2ndConvolution 8 @ 3 8 @ 17
+Convolutional Max Pooling 2 1 8 @ 9
+The3rdConvolution 8 @ 2 8 @ 8
+Convolutional Max Pooling 2 1 8 @ 4
+The4thConvolution 8 @ 2 8 @ 3
+Convolutional Max Pooling 2 1 8 @ 2
+Fully Connected Vectorize - 16
+Output Regression - 47
+1) Parameters of CNN and Datasets Introduction: The
+parameters of the CNN classiﬁer built for the IEEE 39-bus
+power systems are summarized in Table I. This CNN has four
+convolutional layers, one fully connected layer, and one output
+layer. In Table I, “4 @ 3 ” denotes that there are four kernels
+of the size 3 by 1; “4 @ 37” denotes that the output is four
+vectors of the size 37 by 1; “ 21” denotes that there is one
+kernel with the dimension of 2 by 1. In each convolutional
+layer, in the “Convolution” operation the stride size is 1 and
+zeros are padded; in the “Max Pooling” operation, the stride
+size is 2 and no need to pad zeros. “-” denotes that there are
+no kernels. In the output layer of the CNN in Table I, there are
+a weight matrix Wo
+392R1647and a bias matrix Bo
+392R47.
+The number of classes m= 47 , including 46 locations of the
+faulted line and one null outage line [29].
+To train the CNN classiﬁers we set = 0:001, and learning
+rate or iteration step size to be 0.001. The implementation
+of “early stop” is to track the validation loss lvaleveryp
+steps during the training process, and if lvalis less than the
+lowest lossl
+val, thenl
+valwill be updated by lvaland the record
+numbercis reset to be zero, otherwise, cincreases by 1, and
+whencis larger than a threshold p, which means that the
+validation loss does not reduce for ptimes, then iterations
+will be terminated. In our simulation, p= 1000;p= 4 are
+shown to produce reasonable results. The RMSprop optimizer
+with decay coefﬁcient = 0:9is employed to train the CNN
+after comparing with Adam and stochastic gradient descent
+methods. Total 665 datasets (80% are training datasets and
+20% as validating datasets) are employed to train the CNN
+classiﬁer for the 39-bus power system. These datasets include
+the four types of faults with various fault impedance on varous
+load distributions. Another 560 testing datasets are generated
+with different load distributions.
+Table II: The location accuracy rate (%) of CNN in the 39-bus
+power system on the four types of faults under partial measurements
+The Ratio of Measured Buses 15% 20% 25% 30%
+TP 89.5 94.3 94.3 94.3
+LG 92.1 95.7 96.4 96.4
+DLG 89.3 92.9 93.6 95.0
+LL 87.1 89.3 95.0 94.3
+Average 89.5 93.1 94.8 95.0
+2) Performance of the CNN under Partial Observability:
+Real-world PMU deployment is not ubiquitous. We considerscenarios where only 15% 30% of the buses are covered by
+PMUs. The LARs of the CNN for the 39-bus test system under
+partial observability are summarized in Table II. The average
+LARs of the four types of faults indicate that it is easier to
+locate faults with more measured buses. The variations of the
+LARs of different faults are less than 5% when the ratio
+of measured buses changes from 15% to 30%. The LARs
+are mostly higher than 90% but less than 100%. We further
+analyze these misclassiﬁed faults in the next subsection.
+Table III: The misclassiﬁed faults of the CNN for the 39-bus power
+system under partial observability
+Ratio of Measured Buses 15% 20% 25% 30%
+within the faulted line 89.5% 93.1% 94.8% 95.0%
+within 1-hop neighbors 100% 100% 100% 100%
+3) Analysis of Misclassiﬁed Faults: The misclassiﬁed case
+happens when the line gaining the highest probability from the
+CNN classiﬁer is not the faulted line. To illustrate the possible
+distributions of the lines gaining the highest probability, we
+deﬁne the following notations.
+“lprob”represent the lines with the highest probability.
+“within 1-hop neighbors” means that the line lprobis
+directly connected with the faulted line;
+“within 2-hop neighbors” means that at the line lproband
+the faulted line are both connected to a common line.
+The statistical results of all the misclassiﬁed faults are
+summarized in Table III. When there are 15% of buses are
+measured, in 89.5% cases those lprobare exactly the faulted
+lines, and in 100% cases those lprobare within 1-hop neighbors
+of the faulted line. These results demonstrate that the misclas-
+siﬁed faults are all within the 1-hop neighbors of the faulted
+line under the partial observability. The main reason is that
+the buses have relatively small electrical distance [30].
+B. Performances of 68-bus Test Cases under Partial Observ-
+ability
+Table IV: The structural parameters of the CNN for the 68-bus power
+system
+Layer Operator Kernel Output
+The1stConvolution 4 @ 5 4 @ 64
+Convolutional Max Pooling 21 4 @ 32
+The2ndConvolution 8 @ 5 8 @ 28
+Convolutional Max Pooling 21 8 @ 14
+The3rdConvolution 8 @ 3 8 @ 12
+Convolutional Max Pooling 21 8 @ 6
+The4thConvolution 8 @ 3 8 @ 4
+Convolutional Max Pooling 21 8 @ 2
+Fully Connected Vectorize - 16
+Output Regression - 87
+1) Parameters of CNN and Datasets Introduction: The
+parameters of the CNN classiﬁer for the IEEE 68-bus power
+systems are in Table IV. This CNN has four convolutional
+layers, one fully connected layer, and one output layer. The
+notations in Table IV follow the same principles with that
+in Table I. The number of classes m= 87 for the CNN of
+the 68-bus. The weight and bias matrices in the output layer
+isWo
+682R1687;B0
+682R87. The parameters of Table I
+7
+and Table IV are selected according to the number of buses
+and some practical recommendations [26]. We set the hyper-
+parameters to be = 0:001;p= 1000;p= 4;= 0:9, and
+the learning rate is 0.001. Total 1642 datasets (80% are training
+datasets and 20% as validating datasets) are employed to train
+the CNN classiﬁer for the 68-bus power system. About 1210
+testing datasets on various initial conditions are generated to
+test the performance of locating faults.
+Table V: The location accuracy rate (%) of CNN in the 68-bus
+power system on the four types of faults under partial measurements
+The Ratio of Measured Buses 15% 20% 25% 30%
+TP 87.3% 90.1% 91.5% 95.6%
+LG 92.1% 94.4% 94.6% 96.1%
+DLG 89.5% 89.2% 92.0% 94.9%
+LL 90.9% 90.0% 90.5% 93.1%
+Table VI: The location accuracy rate (%) of CNN on the four
+types of faults with different fault impedance under different partial
+measurements
+The Ratio of Measured Buses 15% 20% 25% 30%
+0.1 p.u. 85.5% 88.3% 91.9% 93.4%
+0.05 p.u. 95.7% 94.3% 97.2% 98.6%
+0.01 p.u. 92.3% 90.9% 90.4% 93.8%
+0.001 p.u. 93.4% 94.3% 94.8% 96.7%
+0.0001 p.u. 87.3% 88.1% 87.7% 91.0%
+2) Performance of the CNN under Partial Observability:
+The LARs of the CNN for the 68-bus power system under
+partial observability are summarized in Table V. Most faults
+can be located with more than 90% accuracy. The maximal
+variation of the LARs, due to different ratios of measured
+buses, is less than 10%. The performance of locating faults
+of different fault impedance are summarized in Table VI.
+When the fault impedance is too high or too low under lower
+observability, the LARs are relatively low, as the proportion
+of these extreme cases in the training datasets are relatively
+small [31], but with the increase of measured buses, the
+performances of all fault types can be improved.
+Table VII: The misclassiﬁed faults of the CNN for the 68-bus power
+system under partial observability
+Ratio of Measured Buses 15% 20% 25% 30%
+within the faulted line 90.0% 90.9% 92.2% 94.9%
+within 1-hop neighbors 91.3% 93.5% 96.7% 100%
+within 2-hop neighbors 95.2% 97.4% 100% 100%
+3) Analysis of Misclassiﬁed Faults: Table VII demonstrates
+the distribution of the lprobwhen the system is measured by
+different ratio of buses. Speciﬁcally, when 15% of buses are
+measured, in 88.7% cases lprobare exactly the faulted lines, in
+91.3% cases that the lprobare within the 1-hop neighbors of
+the faulted line, and 95.2% within the 2-hop neighbors. When
+30% of buses are measured, in 94% cases lprobare the faulted
+lines, and all the lprobare in the 1-hop neighbor of the faulted
+line. These results indicate that in more than 90% cases lprob
+are within the 1-hop neighbor of the faulted lines, and the
+more buses are measured, the more likely that the lprobare
+close to the faulted lines.
+Percentage of Measured Buses (%)15 20 25 30LAR (%)
+406080100TP
+Percentage of Measured Buses (%)15 20 25 30LAR (%)
+406080100LG
+Percentage of Measured Buses (%)15 20 25 30LAR (%)
+406080100DLG
+Percentage of Measured Buses (%)15 20 25 30LAR (%)
+406080100LL
+2-NN 3-NN 4-NNFig. 4: The LARs of NN classiﬁer with different layer depths in terms
+of different percentage of measured buses
+15 20 25 30
+Percentage of Measured Buses (%)406080100LAR (%)TP
+15 20 25 30
+Percentage of Measured Buses (%)406080100LAR (%)LG
+15 20 25 30
+Percentage of Measured Buses (%)406080100LAR (%)DLG
+15 20 25 30
+Percentage of Measured Buses (%)406080100LAR (%)LL
+CNN MSVM 2-NN
+Fig. 5: The LARs of the CNN, MSVM, NN on the four types of faults
+in terms of different percentage of measured buses
+C. Comparison of Different Classiﬁers under Partial Observ-
+ability
+When the system is partially observable, we compare the
+LARs of CNN with that of two other machine learning clas-
+siﬁers, including multi-class support vector machine (MSVM)
+[32] and “fully-connected” neural network (NN). The MSVM
+classiﬁer is based on the coupling pairwise method with the
+radial basis function kernel to ﬁnd the global solution. NN
+of twofour layers are tested, and the two-layer NN is
+selected as it achieves the optimal performance as shown in
+Fig. 4, which demonstrates that the two-layer NN has better
+performance than other schemes. The weight and bias matrices
+for the ﬁrst layer of NN are W1
+NN2R6832;b1
+NN2R32and
+for the second layer are W2
+NN2R3216;b2
+NN2R16, and
+the activation function is ReLU function f(x) = max(x;0).
+We set the hyper-parameters to be = 0:001;p= 1000;p=
+4;= 0:9, and learning rate is 0.001. Notice that here the
+NN has a smaller number of hidden units than the dimension
+8
+of output. The performances of NNs with an equal or greater
+number of hidden units are also tested and compared, and the
+average performances of all these NNs are similar and less
+than that of CNN.
+Under such partial observability, the LARs of the MSVM,
+two-layer NN and CNN are compared for the four types
+of faults in Fig. 5. The observed buses for each classiﬁer
+are selected according to the principles of algorithm 1 using
+their corresponding loss functions to demonstrate optimal
+performance.
+The results in Fig. 5 demonstrate that when only 15% 
+30% buses are observed, fault localization by CNN is much
+better for the four types of faults than that shown by the other
+two classiﬁers. Observe that when 30% of buses are measured,
+CNN can reach an impressive fault localization accuracy of
+more than 95% for faults of the four types.
+D. The ARC of CNN under 15% of nodal observability
+It is worth investigating the performance of the CNN
+classiﬁer when less than 15% of all buses are measured. In
+this case, one would guess that LARs of CNN cannot be better
+than 90%. However we observe that even if the CNN does not
+predict the fault location accurately, it is still able to associate
+a relatively large probability of failure (though not the largest)
+to the correct faulted line. To analyze this, we sort the lines
+according to the output probability yjof CNN in descending
+order and then record the rank rjof the correct line of the jth
+fault. We deﬁne a new performance metric “average rank of the
+correct line” ( ARC ) for theNtesting faults as r=1
+NN
+j=1rj.
+The ARC indicates how many high-probability lines need
+to be considered on average to show the correct faulted line.
+Note that a lower ARC reﬂects better average performance
+with the ARC of exact localization being 1.
+Table VIII: The ARC of CNN for different type of faults when the
+ratio of measured buses is less than 15%
+Measured Ratio TP LG DLG LL
+7% 1.32 1.48 1.92 1.56
+10% 1.38 1.28 1.66 1.54
+15% 1.38 1.23 1.57 1.54
+The ARC of the four types of faults is shown in Table VIII
+when no more than 15% of buses are measured. It is signiﬁcant
+that the ARC for all types of faults is less than 3when only 7%
+to 15% of buses are measured. This observation suggests that
+despite the low PMU coverage, the operator needs to check
+only a few lines to identify the fault. Crucially, as discussed
+next, under low PMU coverage, CNN is also able to localize
+the fault to a small graphical neighborhood of its true location.
+E. Neighborhood property of high probability lines
+The lines with high output probability yj
+idemonstrate
+neighborhood property in Fig. 6, where the line between bus
+5 and 6 has a three-phase short circuit fault. All lines are
+sorted according to yj
+ifrom high to low, then those with the
+top-5 probabilities, marked as red, are in the neighborhood
+of the faulted line. Furthermore, we have veriﬁed that this
+60
+96129 28
+27268
+25 531
+2112
+3 18 17
+16 24
+1922
+658
+7592345620
+55715
+14 4
+5 8
+6
+7
+25411 1312
+3551030
+9
+3647 48 406614
+41
+106231
+6311
+32
+33
+343846
+35
+1264
+37
+1365 4344
+3945
+52
+166842
+156749
+51
+50
+1 Generator  1
+Load
+TransformerFig. 6: The lines of top-5 high probability (above) from CNN are
+marked in red IEEE 68-bus power system
+neighborhood property is not a special case for this fault but
+extends to the majority of the tested faults. Moreover, this
+neighborhood property is determined by the feature vector
+in (10) and as such also applies to other tested classiﬁers,
+e.g. NN. Since,  k(k6=i;j), deﬁned in Section II-B as the
+total line currents in the neighborhood of bus k, lines in the
+neighborhood of the fault are identiﬁed with high probability.
+Low ARC and neighborhood localization properties appear
+very useful to guide initial dispatch of a recovery/maintenance
+crew. Moreover, it should also be advantageous to use these
+features to determine the order of triggering relays or circuit
+breakers automatically for protection in the post-fault grid. We
+plan to study these directions in the future.
+F . Comparison with other PMU placement algorithms
+In this Subsection, we discuss the performance of the
+algorithm 1 for PMU placement. The proposed algorithm
+is compared with the “2-hop Vertex Cover (VC)” and the
+Random placement algorithms. The “2-hop VC” is a topology-
+based algorithm for PMU placement [33]. It places PMUs on
+a set of buses such that each edge in the graph is at most
+two hops away from a PMU. The baseline of the Random
+algorithm selects arbitrarily sbuses. The LARs for faults of the
+four tested types are compared in Fig. 7 where the measured
+buses are suggested by the three placement algorithms.
+Fault TypesTP LG DLG LL AveragedLAR (%)
+7476788082848688909294
+Proposed 2-hop Vertex Cover Random
+Fig. 7: The LARs of CNN when 12 measured buses are selected by
+three algorithms
+As there are at least 12 buses that can satisfy the
+objective of “2-hop vertex cover” for this 68-bus power
+system, these three algorithms are compared when s=
+12. The 12 buses selected by the Random algorithm in-
+cludeSR= [31;3;65;46;43;28;15;44;23;58;9;57], one
+solution of the 2-hop VC algorithm is obtained by
+9
+solving a linear programming approximating the 2-hop
+VC formulation, and the selected buses are SVC =
+[3;6;13;19;23;26;30;31;36;40;44;52], and the 12 buses se-
+lected by the method proposed in the manuscript are SP=
+[1;9;16;30;36;23;42;61;51;57;6;37]. Compared with the
+Random algorithm, the improvements of the proposed algo-
+rithm for the different types of faults varies, but it shows about
+10% improvement in average over the other methods. The 2-
+hop VC method also has higher LARs than that of the Random
+algorithm, but it is still lagging behind the proposed algorithm
+showing the average improvement of 8%.
+The running time of the proposed PMU placement algorithm
+is 5.4 hours based on the personal computer of Intel i7,
+3.6 GHz CPU and 32 GB RAM, and this process can be
+accomplished ofﬂine. The running time of testing one dataset
+is 4 ms, thus the proposed CNN classiﬁer can efﬁciently
+determine the location of the faults in real-time.
+G. Robustness to Uncertainty of Loads
+Table IX: The LARs of all types of faults tested on the datasets with
+different uncertainty index 
+Fault Type TP LG DLG LL Average
+= 0.13 95.4 99.4 98.9 98.9 98.2
+= 0.38 95.4 96.1 94.9 93.1 94.9
+= 0.51 98.0 91.6 90.4 84.1 91.0
+The main uncertainty in the power system comes from the
+randomness of load ﬂuctuations and noise, which cause the
+difference between training and testing datasets. To measure
+the uncertainty caused by the load ﬂuctuations, we deﬁne
+uncertainty index 
+=1
+nN0N0
+i=1kU0;i U0k2
+kU0k2(21)
+whereN0is the number of datasets, nis the number of buses,
+andU0;i2Cn1is the pre-fault bus voltages of the ith
+dataset, and U0is the mean value of the pre-fault bus voltages
+of all the training datasets.
+denotes the averaged differences of individual bus voltages
+between the testing and the training datasets. A larger 
+indicates that the datasets have large variances or higher
+complexity. To illustrate the robustness of the classiﬁer to such
+uncertainty, the location accuracy rates are compared with the
+different degree of load variations in Table IX. Here the results
+of 3630 datasets with different load ﬂuctuations are illustrated
+based on 30% measured buses. The uncertainty index of the
+testing datasets changes from 0.13 to 0.51.
+The results in TableIX demonstrate that the classiﬁer can
+tolerate some load variations, and the LARs are more than
+90% if theis less than 0.4. When is small, indicating the
+load variations are mild. When is 0.13, the average LAR
+is close to 100%, and when increases to 0.51, the average
+LAR is less than 95%. Notice that for training datasets =
+0.20. Thus when is far more than 0.2, the classiﬁer need
+to be updated by adding more new training datasets. We also
+conﬁrmed that the average LAR has about 6% improvement
+after adding another more than 1000 training datasets with
+largerto retrain the CNN classiﬁer.
+40 50 60 70 80 90 100
+SNR (dB)
+(a)556065707580859095100LAR (%)
+TPLGDLGLL
+40 50 60 70 80 90 100
+SNR (dB)
+(b)65707580859095100Averaged LAR (%)
+20 %25 %30 %Fig. 8: (a) The LARs for the different types of faults when 30% of
+buses measured with different SNR; (b)The Averaged LARs of all
+types of faults when 20% 30% of buses measured with different
+SNR
+H. Robustness to noise
+The IEEE Standard C37.118 only deﬁnes the measurement
+accuracy but does not specify the signal-noise-ratio(SNR) of
+PMU measurements [34], and the SNR of PMUs in different
+regions can vary. We select the experimental range of SNR
+from 40 dB to 100 dB [17], [35], [36]. Gaussian noise of the
+same SNR is added both to the training and testing datasets.
+The structure of the CNN is the same as before but the hyper-
+parameter decay coefﬁcient, , is changed from 0:9to0:7in
+the noisy regime. Other parameters are the same.
+Fig. 8 (a) demonstrates the LARs with different SNR when
+30% of buses are observed, and the Fig. 8 (b) shows the
+average LARs of all types of faults when 20% 30% of buses
+are observed. Results in Fig. 8 (a) indicate that the sensitivity
+of different types of faults to noise is different, and the three-
+phase short circuit faults are relatively more robust to the noise.
+When SNR is higher than 60 dB, LARs for all the types of
+faults can achieve 90% or higher. Fig. 8 (b) reveals that, as
+expected, when more buses are measured the robustness to
+noise can be strengthened. Furthermore, when SNR is higher
+than 60 dB, the inﬂuence of the noise is contained, and the
+performance does not improve or degrade noticeably.
+I. The Impacts of Voltage Quality
+During the fault period, the viability of voltage mea-
+surements are considered for practical implementation. The
+impacts of inaccuracy of synchronization and the complex
+transients states due to different fault clearing time are studied.
+Table X: The differences dof the delayed LAR and the normal LAR
+for the different mean dof the distribution of the delay time
+d(ms) 20 30 40
+dof TP ( %) 0.1 0.6 0.6
+dof LG ( %) 0 2.8 3.2
+dof DLG ( %) 0.3 3.4 4.8
+dof LL ( %) 0.5 2.5 2.5
+1) The Impacts of inaccuracy of synchronization: Accord-
+ing to the standards of PMUs manufacture in IEEE C37.118.1-
+2011, it is required the measured voltage, currents, and
+frequency to satisfy the 1% maximum Total Vector Error
+(TVE), and the PMU measurement delay should be within the
+dynamic requirements [34]. The delays can be characterized
+by the Gaussian distribution, and the suggested mean is 20
+10
+milliseconds (ms) with standard deviation of 6 ms depending
+on variant communication systems [37]. Thus we randomly
+select some of the measured buses with the delayed measure-
+ments following the Gaussian distribution N(d;d), where
+d=6 ms andd2f20;30;40g.
+Speciﬁcally, we generate datasets with the simulation step
+of 0.001 second and down-sample the datasets to have the
+data rate around 60 samples per second. There are 50% buses
+randomly selected with delayed measurements while others are
+with the exact measurements, then we employ the accurate and
+delayed measurements to compute the feature vector  . The
+resulting LAR is deﬁned as delayed LAR, and the difference
+d= (LAR - delayed LAR) is calculated to measure the
+inﬂuence of the delayed measurements. The dof the four
+types of faults in terms of different dare summarized in
+TableX. Notice that these results are produced when there are
+30% buses are measured.
+The TableX shows the robustness of the proposed method
+to different levels of delay. When the delay is around 20 ms,
+the location performance is almost not impacted as dis less
+than 1%, and when data have a longer time delay, dis within
+5% whend= 3040ms.
+Table XI: The LAR difference fdue to variant fault clearing time
+Tf(s) 0.05 0.1 0.15
+fof TP ( %) 0.5 1.4 0.5
+fof LG ( %) 0 0 0.3
+fof DLG ( %) 1.1 0.6 0.6
+fof LL ( %) 0 0 0.3
+2) The Impacts of fault clearing time: The fault transients
+can be variant due to different fault clearing time, so the perfor-
+mance of the proposed method is tested when the fault clearing
+timeTfchanges from 0.05 s to 0.2 seconds. Here 30% buses
+are measured. For the training datasets Tf= 0:2seconds. The
+LAR with different fault clearing times is denoted as f. Then
+the differences f=j fjfor variant fault clearing time
+are illustrated in Table XI. The fof different types of faults
+is less than 2%, demonstrating the robustness to different fault
+clearing time.
+In addition, phase-angle jump3is also possible to cause the
+voltage sag depending on the degree of the jumped angle.
+In the distribution system, phase angle jump can be tens
+of degree but is much smaller in the transmission system
+[39]. The averaged phase angle jump in our testing system
+is around ( 1020) for the different fault impedance. Thus
+the proposed method is robust to such phase angle jump, but
+the application to the distribution system needs to consider the
+more signiﬁcant phase angle jump up to 60, which will be
+our future research.
+VI. C ONCLUSIONS
+This manuscript proposes to locate the faulted line by a
+CNN classiﬁer through the use of physically interpretable
+feature vectors. The clear physical interpretations of these
+3Phase-angle jump means a sudden change in phase angle during a short
+circuit. This phenomenon is due to the different ratio of reactance Xto
+impedanceRbetween the source and the feeder [38].feature vectors are explained based on the substitution theory.
+The beneﬁts of employing these features have three aspects:
+1) a high location accuracy rate is reached even when the
+system has low observability; 2) the true faulted line, even
+if not the highest, has a high output probability (among top-
+k, if not the highest) from the classiﬁer in low observability;
+3) the misclassiﬁed lines output by the classiﬁer mostly are
+geographically near the faulted line. The location performance
+is further increased by using the design of the CNN classiﬁer
+into a joint PMU placement algorithm, that is demonstrably
+superior to other random and topology-based methods. The
+signiﬁcance of the proposed faulted line localization method
+over other methods is revealed in the robustness to different
+conditions, including variant random load ﬂuctuations, noise,
+inaccurate voltage measurements in the IEEE 39-bus and 68-
+bus power systems.
+In the future, we will extend this work to the distribution
+system and identify the exact location of the fault along the
+line. Furthermore, testing the methodology on real-data (as
+opposed to synthetically generated data) is another direction
+for our future work.
+REFERENCES
+[1] D. Novosel, G. Bartok, G. Henneberg, P. Mysore, D. Tziouvaras, and
+S. Ward, “Ieee psrc report on performance of relaying during wide-area
+stressed conditions,” IEEE Trans. Power Del. , vol. 25, no. 1, pp. 3–16,
+2010.
+[2] M. Wang, J. H. Chow, P. Gao, X. T. Jiang, Y . Xia, S. G. Ghiocel,
+B. Fardanesh, G. Stefopolous, Y . Kokai, and N. Saito, “A low-rank
+matrix approach for the analysis of large amounts of power system
+synchrophasor data,” in Proc. IEEE Hawaii International Conference
+on System Sciences (HICSS) , 2015, pp. 2637–2644.
+[3] M. Farajollahi, A. Shahsavari, and H. Mohsenian-Rad, “Location iden-
+tiﬁcation of distribution network events using synchrophasor data,” in
+2017 North American Power Symposium (NAPS) . IEEE, 2017, pp. 1–6.
+[4] H. Jiang, J. J. Zhang, W. Gao, and Z. Wu, “Fault detection, identiﬁcation,
+and location in smart grid based on data-driven computational methods,”
+IEEE Trans. Smart Grid , vol. 5, no. 6, pp. 2947–2956, 2014.
+[5] M. Farajollahi, A. Shahsavari, E. Stewart, and H. Mohsenian-Rad,
+“Locating the source of events in power distribution systems using
+micro-pmu data,” IEEE Trans. Power Syst. , 2018.
+[6] L. J. Lewis, “Traveling wave relations applicable to power-system fault
+locators,” Transactions of the American Institute of Electrical Engineers ,
+vol. 70, no. 2, pp. 1671–1680, 1951.
+[7] R. J. Hamidi and H. Livani, “Traveling-wave-based fault-location algo-
+rithm for hybrid multiterminal circuits,” IEEE Trans. Power Del. , vol. 32,
+no. 1, pp. 135–144, 2017.
+[8] A. Yadav and A. Swetapadma, “A single ended directional fault section
+identiﬁer and fault locator for double circuit transmission lines using
+combined wavelet and ann approach,” International Journal of Electrical
+Power & Energy Systems , vol. 69, pp. 27–33, 2015.
+[9] H. Livani and C. Y . Evrenoso ˘glu, “A fault classiﬁcation and localization
+method for three-terminal circuits using machine learning,” IEEE Trans.
+Power Del. , vol. 28, no. 4, pp. 2282–2290, 2013.
+[10] S. Azizi and M. Sanaye-Pasand, “A straightforward method for wide-
+area fault location on transmission networks,” IEEE Trans. Power Del. ,
+vol. 30, no. 1, pp. 264–272, 2015.
+[11] G. Feng and A. Abur, “Fault location using wide-area measurements
+and sparse estimation,” IEEE Trans. Power Syst. , vol. 31, no. 4, pp.
+2938–2945, 2016.
+[12] M. Majidi, M. Etezadi-Amoli, and M. S. Fadali, “A sparse-data-driven
+approach for fault location in transmission networks,” IEEE Trans. Smart
+Grid , vol. 8, no. 2, pp. 548–556, 2017.
+[13] M. Korkali, H. Lev-Ari, and A. Abur, “Traveling-wave-based fault-
+location technique for transmission grids via wide-area synchronized
+voltage measurements,” IEEE Trans. Power Syst. , vol. 27, no. 2, pp.
+1003–1011, 2012.
+11
+[14] H. Zhu and G. B. Giannakis, “Sparse overcomplete representations for
+efﬁcient identiﬁcation of power line outages,” IEEE Trans. Power Syst. ,
+vol. 27, no. 4, pp. 2215–2224, 2012.
+[15] A. Krizhevsky, I. Sutskever, and G. E. Hinton, “Imagenet classiﬁcation
+with deep convolutional neural networks,” in Advances in neural infor-
+mation processing systems , 2012, pp. 1097–1105.
+[16] I. Sutskever, O. Vinyals, and Q. V . Le, “Sequence to sequence learning
+with neural networks,” in Advances in neural information processing
+systems , 2014, pp. 3104–3112.
+[17] L. Xie, Y . Chen, and P. R. Kumar, “Dimensionality reduction of
+synchrophasor data for early event detection: Linearized analysis,” IEEE
+Trans. Power Syst. , vol. 29, no. 6, pp. 2784–2794, 2014.
+[18] Q. Jiang, B. Wang, and X. Li, “An efﬁcient PMU-based fault-location
+technique for multiterminal transmission lines,” IEEE Trans. Power Del. ,
+vol. 29, no. 4, pp. 1675–1682, 2014.
+[19] G. Rogers, Power system oscillations . Springer Science & Business
+Media, 2012.
+[20] J. H. Chow and K. W. Cheung, “A toolbox for power system dynamics
+and control engineering education and research,” IEEE Trans. Power
+Syst., vol. 7, no. 4, pp. 1559–1564, 1992.
+[21] A.-r. Mohamed, G. E. Dahl, G. Hinton et al. , “Acoustic modeling
+using deep belief networks,” IEEE Trans. Audio, Speech & Language
+Processing , vol. 20, no. 1, pp. 14–22, 2012.
+[22] C. Robert, “Machine learning, a probabilistic perspective,” 2014.
+[23] I. Goodfellow, Y . Bengio, and A. Courville, Deep Learning . MIT Press,
+2016, http://www.deeplearningbook.org.
+[24] D. P. Kingma and J. L. Ba, “Adam: Amethod for stochastic optimiza-
+tion,” in Proc. 3rd Int. Conf. Learn. Representations , 2014, pp. 1–15.
+[25] T. Tieleman and G. Hinton, “Lecture 6.5-rmsprop: Divide the gradient
+by a running average of its recent magnitude,” COURSERA: Neural
+Netw. Mach. Learn, 2012.
+[26] Y . Bengio, “Practical recommendations for gradient-based training of
+deep architectures,” in Neural networks: Tricks of the trade . Springer,
+2012, pp. 437–478.
+[27] Y . Zhao, A. Goldsmith, and H. V . Poor, “On PMU location selection for
+line outage detection in wide-area transmission networks,” in Power and
+Energy Society General Meeting, 2012 IEEE . IEEE, 2012, pp. 1–8.
+[28] P. Kundur, N. J. Balu, and M. G. Lauby, Power system stability and
+control . McGraw-hill New York, 1994, vol. 7.
+[29] M. Garcia, T. Catanach, S. Vander Wiel, R. Bent, and E. Lawrence,
+“Line outage localization using phasor measurement data in transient
+state,” IEEE Trans. Power Syst. , vol. 31, no. 4, pp. 3019–3027, 2016.
+[30] P. Kundur, N. J. Balu, and M. G. Lauby, Power system stability and
+control . McGraw-hill New York, 1994, vol. 7.
+[31] B. Hariharan and R. Girshick, “Low-shot visual recognition by shrinking
+and hallucinating features,” in Proc. of the IEEE International Confer-
+ence on Computer Vision , 2017, pp. 3018–3027.
+[32] S. P ¨oyh¨onen, A. Arkkio, P. Jover, and H. Hy ¨otyniemi, “Coupling
+pairwise support vector machines for fault classiﬁcation,” Control En-
+gineering Practice , vol. 13, no. 6, pp. 759–769, 2005.
+[33] D. Deka and S. Vishwanath, “Pmu placement and error control using
+belief propagation,” in Smart Grid Communications (SmartGridComm),
+2011 IEEE International Conference on . IEEE, 2011, pp. 552–557.
+[34] K. E. Martin, “Synchrophasor measurements under the ieee standard
+c37. 118.1-2011 with amendment c37. 118.1 a,” IEEE Trans. Power
+Del., vol. 30, no. 3, pp. 1514–1522, 2015.
+[35] M. Brown, M. Biswal, S. Brahma, S. J. Ranade, and H. Cao, “Char-
+acterizing and quantifying noise in PMU data,” in Power and Energy
+Society General Meeting (PESGM), 2016 . IEEE, 2016, pp. 1–5.
+[36] W. Li, M. Wang, and J. H. Chow, “Real-time event identiﬁcation
+through low-dimensional subspace characterization of high-dimensional
+synchrophasor data,” IEEE Trans. Power Syst. , vol. 33, no. 5, pp. 4937–
+4947, 2018.
+[37] K. Zhu, “Data quality in wide area monitoring and control system,” KTH,
+The Royal Institute of Technology, Stockholm, Sweden, PhD thesis , 2013.
+[38] M. H. Bollen and M. H. Bollen, Understanding power quality problems:
+voltage sags and interruptions . IEEE press New York, 2000, vol. 445.
+[39] M. R. Qader, M. H. Bollen, and R. N. Allan, “Stochastic prediction of
+voltage sags in a large transmission system,” IEEE Trans. Ind. Appl. ,
+vol. 35, no. 1, pp. 152–162, 1999.
+Wenting Li (S’16) received the B.E. degree from
+Harbin Institute of Technology, Heilongjiang, China,
+in 2013.
+She is pursuing the Ph.D. degree in electrical en-
+gineering at Rensselaer Polytechnic Institute, Troy,
+NY . Her research interests include high-dimensional
+data analytics, feature extraction, application of ma-
+chine/deep learning methods to identify and locate
+events in power grids.
+Deepjyoti Deka (M’11) is a staff scientist in the
+Applied Mathematics and Plasma Physics group of
+the Theoretical Division at Los Alamos National
+Laboratory, where he was previously a postdoctoral
+research associate at the Center for Nonlinear Stud-
+ies. His research interests include data-analysis of
+power grid structure, operations and security, and
+optimization in social and physical networks. At
+LANL, Dr. Deka serves as a co-principal investigator
+for DOE projects on machine learning in distribu-
+tion systems and in cyber-physical security. Before
+joining the laboratory he received the M.S. and Ph.D. degrees in electrical
+engineering from the University of Texas, Austin, TX, USA, in 2011 and 2015,
+respectively. He completed his undergraduate degree in electrical engineering
+from IIT Guwahati, India in 2009 with an institute silver medal as the best
+outgoing student of the department.
+Michael Chertkov Prof. Chertkov’s areas of interest
+include mathematics and statistics applied to phys-
+ical, engineering and data sciences. Dr. Chertkov
+received his Ph.D. in physics from the Weizmann
+Institute of Science in 1996, and his M.Sc. in physics
+from Novosibirsk State University in 1990. After his
+Ph.D., Dr. Chertkov spent three years at Princeton
+University as a R.H. Dicke Fellow in the Department
+of Physics. He joined Los Alamos National Lab in
+1999, initially as a J.R. Oppenheimer Fellow in the
+Theoretical Division, and continued as a Technical
+Staff Member leading projects in physics of algorithms, energy grid systems,
+physics and engineering informed data science and machine learning for
+turbulence. In 2019 Prof. Chertkov moved to Tucson to lead Interdisciplinary
+Graduate Program in Applied Mathematics at the University of Arizona,
+continuing to work for LANL part time. Dr. Chertkov has published more
+than 200 papers. He is a fellow of the American Physical Society (APS) and
+a senior member of IEEE.
+Meng Wang (M’12) received B.S. and M.S. degrees
+from Tsinghua University, China, in 2005 and 2007,
+respectively. She received the Ph.D. degree from
+Cornell University, Ithaca, NY , USA, in 2012.
+She is an Assistant Professor in the department
+of Electrical, Computer, and Systems Engineering
+at Rensselaer Polytechnic Institute, Troy, NY , USA.
+Her research interests include high-dimensional data
+analytics, machine learning, power systems monitor-
+ing, and synchrophasor technologies.
