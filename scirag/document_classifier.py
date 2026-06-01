@@ -56,7 +56,6 @@ class DocumentClassifier:
                 self._embedding = SentenceTransformer(embedding_model, device="cpu")
                 # Precompute tag description embeddings
                 tag_texts = [self.TAG_DESCRIPTIONS[t] for t in ["T", "E", "M", "A"]]
-                import numpy as np
                 self._tag_embeddings = self._embedding.encode(tag_texts, convert_to_numpy=True)
                 logger.info(f"Classifier: using embedding model {embedding_model}")
             except Exception as e:

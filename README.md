@@ -29,11 +29,11 @@ Outline-guided synthesis with citation-graph reasoning for academic research.
 ## Quick Start
 
 ```bash
-# Install
+# Install runtime dependencies
 pip install -r requirements.txt
 
-# Set API key
-export MOONSHOT_API_KEY="your_key"
+# Configure providers (copy and edit)
+cp .env.example .env        # then fill in PRIMARY_API_KEY / GEMINI_API_KEY / etc.
 
 # Run research
 python main.py query "What are the latest methods for dense passage retrieval?" --papers-dir ./papers
@@ -44,6 +44,9 @@ python main.py api --port 8000
 # Start MCP server (for Claude Code / Kimi Code)
 python main.py mcp
 ```
+
+See [`.env.example`](./.env.example) for every supported environment variable.
+LLM providers are tried in fallback order (primary → Gemini → HF/DeepInfra → local).
 
 ## API Endpoints
 
@@ -57,38 +60,56 @@ python main.py mcp
 ## Project Structure
 
 ```
-scirag/               # Core package
-├── pipeline.py       # Orchestrator (8 stages)
-├── tree_node.py      # TreeNode + GapCriticTree
+scirag/                    # Core package
+├── pipeline.py            # End-to-end orchestrator
+├── orchestrator.py        # Local-LLM iterative orchestrator
+├── outline_generator.py   # Outline tree generation
+├── tree_node.py           # TreeNode + GapCriticTree
 ├── symbolic_reasoning.py  # SPO triples + info-units
-├── s2_client.py      # Semantic Scholar API
-├── reranker.py       # BGE cross-encoder
-├── attribution.py    # Post-hoc citation
-├── embedder.py       # Sentence transformers
-├── faiss_store.py    # FAISS vector store
-├── hybrid_retriever.py  # Dense retrieval
-├── ingestion.py      # Document ingestion
-├── llm_client.py    # Kimi API client
-├── config.py         # Configuration
-├── verifier.py       # Fact verification
-├── citation_graph.py # NetworkX graph
-├── api.py            # FastAPI app
-├── mcp_server.py    # MCP server
-└── cli.py            # CLI entry
+├── iterative_synthesizer.py  # Recursive synthesis
+├── s2_client.py           # Semantic Scholar API client
+├── citation_graph.py      # NetworkX citation graph
+├── reranker.py            # BGE cross-encoder reranking
+├── attribution.py         # Post-hoc per-sentence citation
+├── verifier.py            # Fact verification
+├── embedder.py            # Sentence-transformers embeddings
+├── faiss_store.py         # FAISS vector store
+├── hybrid_retriever.py    # Dense retrieval
+├── ingestion.py           # Document ingestion / chunking
+├── document_classifier.py # Symbolic T/E/M/A classification
+├── theme_materialize.py   # Theme/paper materialization
+├── llm_client.py          # PrimaryClient (OpenAI-compatible) + fallbacks
+├── local_llm_manager.py   # LM Studio / Ollama management
+├── firecrawl_adapter.py   # Firecrawl deep-research adapter
+├── config.py              # SciRAGConfig (env-driven)
+├── state.py               # Shared runtime state
+├── api.py                 # FastAPI app
+├── mcp_server.py          # MCP server
+├── cli.py                 # `scirag` CLI entry
+└── deep_search/           # Academic discovery (OpenAlex/CrossRef/ArXiv/S2)
 
-tests/                # Tests
-├── test_phase2_symbolic.py
-├── test_phase3_s2.py
-├── test_phase4_reranker.py
-└── test_phase5_attribution.py
-
-third_party/          # Cloned repos
-├── nlp-contrib-graph/  # Phase 2 (SemEval-2021)
-└── semanticscholar/    # Phase 3 (S2 API)
-
-data/                 # Data directory
-└── vector_index/     # FAISS index + metadata
+tests/                     # pytest suite
+third_party/               # Vendored upstream repos (not linted)
 ```
+
+## Development
+
+```bash
+# Editable install with dev + api + mcp extras
+pip install -e ".[dev,api,mcp]"
+
+# Enable git hooks (ruff lint + hygiene)
+pre-commit install
+
+# Common tasks (see Makefile)
+make lint     # ruff check .
+make format   # ruff check --fix + ruff format
+make test     # pytest
+```
+
+Linting (`ruff`) and the test suite run in CI on every push and pull request
+(see [`.github/workflows/ci.yml`](./.github/workflows/ci.yml)). See
+[`CONTRIBUTING.md`](./CONTRIBUTING.md) for the contribution workflow.
 
 ## License
 

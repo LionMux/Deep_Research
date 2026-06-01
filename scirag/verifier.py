@@ -7,8 +7,8 @@ LLM API for semantic verification; local string matching for exact verification.
 import logging
 from typing import Dict, List
 
-from .llm_client import KimiClient
 from .config import SciRAGConfig
+from .llm_client import KimiClient
 
 logger = logging.getLogger(__name__)
 

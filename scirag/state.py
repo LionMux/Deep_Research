@@ -52,10 +52,10 @@ def _ensure_init(papers_dir: Optional[str] = None) -> dict:
         papers_path.mkdir(parents=True, exist_ok=True)
         logger.info(f"Created papers directory: {papers_path}")
 
-    from scirag.config import SciRAGConfig
-    from scirag.llm_client import PrimaryClient
     from scirag.citation_graph import CitationGraph
+    from scirag.config import SciRAGConfig
     from scirag.document_classifier import DocumentClassifier
+    from scirag.llm_client import PrimaryClient
 
     state["papers_dir"] = str(papers_path)
     # Важно: все настройки берем из SciRAGConfig (подхватывает .env)
@@ -94,7 +94,7 @@ def _build_retriever(state: dict):
         return None
 
     from scirag.embedder import EmbedderFactory
-    from scirag.faiss_store import FAISSVectorStore, Chunk
+    from scirag.faiss_store import Chunk, FAISSVectorStore
     from scirag.hybrid_retriever import HybridRetriever
 
     logger.info(f"Building retriever from {len(state['chunks'])} chunks...")

@@ -3,7 +3,7 @@ from __future__ import annotations
 import json
 import os
 from dataclasses import dataclass
-from typing import Dict, Optional
+from typing import Dict
 
 from .mcp_contracts import FullReportSession, make_new_session_id
 

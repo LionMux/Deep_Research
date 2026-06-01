@@ -8,9 +8,10 @@ Run: python tests/test_phase0_deep_search.py
 """
 
 import sys
+
 sys.path.insert(0, '.')
 
-from scirag.deep_search import AcademicSearchEngine, PDFDownloader, DiscoveredPaper
+from scirag.deep_search import AcademicSearchEngine, DiscoveredPaper
 from scirag.deep_search.academic_search import FuzzyDedup
 
 
@@ -69,8 +70,9 @@ def test_ranking():
 def test_pipeline_integration():
     """Test pipeline accepts deep_search_query."""
     print("\n=== Test: Pipeline Integration ===")
-    from scirag.pipeline import SciRAGPipeline
     import inspect
+
+    from scirag.pipeline import SciRAGPipeline
     sig = inspect.signature(SciRAGPipeline.run)
     assert "deep_search_query" in sig.parameters
     print("  ✓ Pipeline.run() has deep_search_query parameter")
@@ -79,7 +81,6 @@ def test_pipeline_integration():
 def test_mcp_integration():
     """Test MCP server has scirag_deepsearch."""
     print("\n=== Test: MCP Integration ===")
-    from scirag.mcp_server import _mcp_tool
     print("  ✓ MCP decorator available")
 
 

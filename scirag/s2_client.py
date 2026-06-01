@@ -23,7 +23,7 @@ import os
 import time
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Dict, List, Optional, Set, Tuple
+from typing import Dict, List, Optional
 
 logger = logging.getLogger(__name__)
 
@@ -38,7 +38,6 @@ if _SCHOLAR_PATH not in os.sys.path:
 # Lazy import to avoid loading during module init
 try:
     from semanticscholar import SemanticScholar
-    from semanticscholar.Paper import Paper
     _SCHOLAR_AVAILABLE = True
 except ImportError:
     _SCHOLAR_AVAILABLE = False

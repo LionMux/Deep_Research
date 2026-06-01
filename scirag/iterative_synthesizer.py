@@ -7,15 +7,14 @@ Inspired by Princeton NLP tree-of-thought-llm (BFS exploration)
 and Yale NLP SciRAG (bottom-up aggregation).
 """
 
-import json
 import logging
-from typing import Dict, List, Optional
+from typing import List, Optional
 
-from .llm_client import KimiClient
-from .config import SciRAGConfig
-from .tree_node import TreeNode, GapCriticTree
 from .citation_graph import CitationGraph
+from .config import SciRAGConfig
 from .document_classifier import DocumentClassifier
+from .llm_client import KimiClient
+from .tree_node import GapCriticTree, TreeNode
 
 logger = logging.getLogger(__name__)
 
@@ -44,7 +43,7 @@ class Fact:
 class IterativeSynthesizer:
     """
     SciRAG synthesis engine with recursive gap_critic tree.
-    
+
     Algorithm:
       1. Build TreeNode tree from outline
       2. For each leaf: search → extract → fill → critique
@@ -69,11 +68,11 @@ class IterativeSynthesizer:
     def synthesize(self, root: TreeNode, retriever) -> TreeNode:
         """
         Full synthesis with recursive gap_critic tree.
-        
+
         Args:
             root: TreeNode root with outline sections as children
             retriever: object with .retrieve(query, top_k) method
-        
+
         Returns:
             Completed tree with all sections synthesized
         """
@@ -106,7 +105,7 @@ class IterativeSynthesizer:
         # Step 2: Process all leaves (search → extract → fill)
         leaves = root.get_leaves()
         logger.info(f"Processing {len(leaves)} leaf nodes...")
-        
+
         for i, leaf in enumerate(leaves, 1):
             logger.info(f"[{i}/{len(leaves)}] Leaf: {leaf.title}")
             self._process_leaf(leaf, retriever)
@@ -284,19 +283,19 @@ Write 2-4 paragraphs in academic style."""
         """Evaluate node quality using fact count and confidence."""
         if not node.facts:
             return 0.2
-        
+
         # Factors: fact count (0-0.4), draft length (0-0.3), citations (0-0.3)
         fact_score = min(len(node.facts) / 5, 1.0) * 0.4
         length_score = min(len(node.draft) / 500, 1.0) * 0.3
         citation_score = min(len(node.citations) / 3, 1.0) * 0.3
-        
+
         return fact_score + length_score + citation_score
 
     def _cross_section_critique(self, root: TreeNode):
         """Check for cross-section issues: duplication, contradictions."""
         all_nodes = self._get_all_nodes(root)
         seen_facts = set()
-        
+
         for node in all_nodes:
             for f in node.facts:
                 key = f.text[:100]

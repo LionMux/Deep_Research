@@ -7,7 +7,7 @@ import logging
 from typing import List, Optional
 
 from .embedder import SimpleEmbedder
-from .faiss_store import FAISSVectorStore, Chunk
+from .faiss_store import Chunk, FAISSVectorStore
 
 logger = logging.getLogger(__name__)
 

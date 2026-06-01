@@ -11,7 +11,6 @@ import hashlib
 import re
 from typing import Dict, List, Tuple
 
-
 _HEADING_RE = re.compile(r"^(#{1,4})\s+(.+?)\s*$", re.MULTILINE)
 _SOURCE_LINK_RE = re.compile(r"\[.*?\]\((https?://[^)]+)\)")
 _PLAIN_URL_RE = re.compile(r"(https?://[^\s)\]]+)")

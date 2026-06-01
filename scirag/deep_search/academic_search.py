@@ -18,13 +18,10 @@ Usage:
 
 import asyncio
 import html
-import json
 import logging
 import re
 import time
-from collections import Counter
 from dataclasses import dataclass, field
-from pathlib import Path
 from typing import Dict, List, Optional, Set, Tuple
 
 import httpx
@@ -93,7 +90,7 @@ class FuzzyDedup:
         for p in papers:
             # Exact title match (strip year for preprint vs published versions)
             title_key = re.sub(r'\s*\(\d{4}\)\s*', ' ', p.title.lower()).strip()
-            
+
             if p.doi:
                 dk = p.doi.lower().strip()
                 if dk in by_doi:
@@ -108,7 +105,7 @@ class FuzzyDedup:
 
         # Combine all accepted papers
         all_accepted = list(by_doi.values())
-        
+
         # Check no_doi against ALL accepted (including DOI papers) by title similarity
         for p in list(no_doi):
             is_dup = False
@@ -119,7 +116,7 @@ class FuzzyDedup:
                     break
             if not is_dup:
                 all_accepted.append(p)
-        
+
         # Second pass: check DOI papers against each other by title (catches preprint vs published)
         result = []
         for p in all_accepted:
@@ -131,7 +128,7 @@ class FuzzyDedup:
                     break
             if not is_dup:
                 result.append(p)
-        
+
         return result
 
     def _merge(self, into: DiscoveredPaper, other: DiscoveredPaper):
@@ -444,7 +441,7 @@ class AcademicSearchEngine:
             (papers, stats) where stats contains timing and counts.
         """
         start = time.time()
-        
+
         # Expand query if generic
         query = self._expand_query(query)
         logger.info(f"Deep Search: '{query}' (target: {self.target})")

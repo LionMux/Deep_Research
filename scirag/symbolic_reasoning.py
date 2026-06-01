@@ -12,14 +12,13 @@ Inspired by:
     info-unit classification, cross-sentence resolution
 """
 
-import json
 import logging
 import re
 from dataclasses import dataclass, field
-from typing import Dict, List, Optional, Tuple, Set
+from typing import Dict, List, Optional, Tuple
 
-from .llm_client import KimiClient
 from .config import SciRAGConfig
+from .llm_client import KimiClient
 from .tree_node import TreeNode
 
 logger = logging.getLogger(__name__)
@@ -77,11 +76,11 @@ def is_heading(line: str, main=False) -> bool:
     if len(words) >= 2 and words[0][0].isupper():
         capitalized = sum(1 for w in words if w and w[0].isupper())
         if capitalized >= max(len(words) * 0.5, 1):
-            if not line[-1] in '.,;:!?':
+            if line[-1] not in '.,;:!?':
                 return True
     # Short heading (1-3 words, ALL CAPS or Title Case, no ending punctuation)
     if len(words) <= 3 and len(line) > 3:
-        if not line[-1] in '.,;:!?':
+        if line[-1] not in '.,;:!?':
             if line.isupper() or (words[0][0].isupper() if words else False):
                 return True
     return False

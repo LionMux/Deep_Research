@@ -13,7 +13,7 @@ Parent/children relationships form a tree for:
 
 import logging
 from concurrent.futures import ThreadPoolExecutor, as_completed
-from typing import Dict, List, Optional, Callable
+from typing import Callable, Dict, List, Optional
 
 logger = logging.getLogger(__name__)
 
@@ -105,7 +105,7 @@ class TreeNode:
 class GapCriticTree:
     """
     Recursive gap critic with tree traversal.
-    
+
     Algorithm (BFS, inspired by tree-of-thought-llm):
       1. Build tree from outline
       2. For each leaf: generate draft → evaluate value
@@ -144,12 +144,12 @@ class GapCriticTree:
                             parallel: bool = True) -> TreeNode:
         """
         BFS critique: critique each leaf, expand if gaps found.
-        
+
         Args:
             root: TreeNode root
             context: additional context for generation
             parallel: use ThreadPoolExecutor for parallel critique
-        
+
         Returns:
             Expanded tree with all gaps filled or depth limit reached
         """
@@ -248,13 +248,13 @@ Format: "GAPS: gap1 | gap2 | ..." or "NO GAPS" if complete."""
             return [g.strip() for g in parts if g.strip()]
 
         # Fallback: split by newlines, filter short lines
-        lines = [l.strip("- ") for l in text.split("\n") if l.strip()]
-        return [l for l in lines if len(l) > 20 and len(l) < 200][:self.max_gaps_per_node]
+        lines = [ln.strip("- ") for ln in text.split("\n") if ln.strip()]
+        return [ln for ln in lines if len(ln) > 20 and len(ln) < 200][:self.max_gaps_per_node]
 
     def bottom_up_aggregate(self, root: TreeNode) -> str:
         """
         Bottom-up aggregation: merge children into parent.
-        
+
         SciRAG algorithm:
           1. Process leaves (generate drafts)
           2. Merge siblings into parent

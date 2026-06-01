@@ -7,9 +7,9 @@ All logs and diagnostics go to stderr.
 """
 
 # ========== STEP 1: IMPORTS ==========
-import sys
-import os
 import io
+import sys
+
 
 # NOTE:
 # Не переназначаем sys.stdout/sys.stderr при импорте модуля — pytest-у capture
@@ -60,21 +60,16 @@ except ImportError:
     sys.exit(1)
 
 # SciRAG imports (these may print; stdout is now locked)
-from scirag.llm_client import KimiClient
-from scirag.config import SciRAGConfig
+from scirag.iterative_synthesizer import IterativeSynthesizer
 from scirag.outline_generator import OutlineGenerator
-from scirag.tree_node import TreeNode, GapCriticTree
-from scirag.citation_graph import CitationGraph
-from scirag.document_classifier import DocumentClassifier
-from scirag.iterative_synthesizer import IterativeSynthesizer, Fact
-from scirag.verifier import FactVerifier
 from scirag.state import (
-    _server_state,
-    _ensure_init,
     _build_retriever,
+    _ensure_init,
     _load_chunks,
     do_status,
 )
+from scirag.tree_node import GapCriticTree, TreeNode
+from scirag.verifier import FactVerifier
 
 _symbolic_reasoner_cls = None
 
@@ -416,8 +411,11 @@ def scirag_theme_followup(
     - re-materializes used/remaining idempotently with resume=True/False
     """
     try:
-        from scirag.theme_materialize import theme_materialize_from_query, theme_id as compute_theme_id
-        from scirag.theme_materialize import _read_meta  # type: ignore[attr-defined]
+        from scirag.theme_materialize import (
+            _read_meta,  # type: ignore[attr-defined]
+            theme_materialize_from_query,
+        )
+        from scirag.theme_materialize import theme_id as compute_theme_id
 
         state = _ensure_init()
         base_dir = base_papers_dir or state.get("papers_dir") or "./papers"
@@ -586,8 +584,7 @@ def scirag_full_report_refine(
         theme_dir = Path("papers") / "themes" / t_id
         meta_path = theme_dir / "meta.json"
         from scirag.theme_materialize import _read_meta  # type: ignore[attr-defined]
-        prev_meta = _read_meta(meta_path)
-        prev_used = set(prev_meta.get("used_doc_ids", []) or [])
+        _read_meta(meta_path)
 
         # follow-up response doesn't directly return used_doc_ids list in current implementation.
         # fallback: use follow-up session selected_doc_ids as ground truth by reusing session_id.
@@ -641,20 +638,20 @@ def scirag_full_report_refine(
 # =========================
 
 # Lazy module-level singletons for session management (kept in-process)
-from scirag.deep_search.coverage_planner import select_evidence_papers, CandidatePaper
-from scirag.deep_search.session_store import (
-    InMemorySessionStore,
-    DiskSessionStore,
-    HybridSessionStore,
-    DiskPaths,
-)
-from scirag.deep_search.evidence_binder import bind_retriever_to_chunks_subset, filter_chunks_by_doc_ids
-from scirag.deep_search.sufficiency_evaluator import evaluate_information_sufficiency, default_sufficiency_policy
+from scirag.deep_search.coverage_planner import CandidatePaper, select_evidence_papers
+from scirag.deep_search.evidence_binder import bind_retriever_to_chunks_subset
 from scirag.deep_search.mcp_contracts import (
-    FullReportResponse,
     FollowupReportResponse,
+    FullReportResponse,
     make_new_session_id,
 )
+from scirag.deep_search.session_store import (
+    DiskPaths,
+    DiskSessionStore,
+    HybridSessionStore,
+    InMemorySessionStore,
+)
+from scirag.deep_search.sufficiency_evaluator import default_sufficiency_policy, evaluate_information_sufficiency
 
 _SESSION_STORE: Optional[HybridSessionStore] = None
 

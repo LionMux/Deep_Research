@@ -2,7 +2,6 @@
 import asyncio
 import json
 import logging
-import os
 import sys
 import threading
 import time
@@ -22,28 +21,17 @@ except ImportError:
     sys.exit(1)
 
 # SciRAG direct imports (avoid mcp_server which has strict stdout requirements)
-from scirag.llm_client import KimiClient
-from scirag.config import SciRAGConfig
+from scirag.iterative_synthesizer import IterativeSynthesizer
 from scirag.outline_generator import OutlineGenerator
-from scirag.tree_node import TreeNode, GapCriticTree
-from scirag.citation_graph import CitationGraph
-from scirag.document_classifier import DocumentClassifier
-from scirag.iterative_synthesizer import IterativeSynthesizer, Fact
-from scirag.verifier import FactVerifier
-from scirag.embedder import EmbedderFactory
-from scirag.faiss_store import FAISSVectorStore, Chunk
-from scirag.hybrid_retriever import HybridRetriever
 
 # Shared state (singleton across api.py and mcp_server.py when in same process)
 from scirag.state import (
-    _server_state,
     _ensure_init,
-    _build_retriever,
-    _load_chunks,
     do_index,
     do_search,
     do_status,
 )
+from scirag.verifier import FactVerifier
 
 try:
     from scirag.deep_search import AcademicSearchEngine, PDFDownloader
@@ -211,7 +199,7 @@ def do_deepsearch(query, target=50, download=True):
     if not _DEEP_SEARCH_AVAILABLE:
         return {"error": "Deep search not available"}
     engine = AcademicSearchEngine(target=target)
-    
+
     # Run async search in a separate thread to avoid asyncio.run() conflict
     # with the running uvicorn event loop
     result_holder = [None]
@@ -226,7 +214,7 @@ def do_deepsearch(query, target=50, download=True):
     t.start()
     t.join()
     papers, stats = result_holder[0]
-    
+
     result = {
         "query": query,
         "stats": stats,
@@ -493,8 +481,9 @@ app = Starlette(
 
 
 if __name__ == "__main__":
-    import uvicorn
     import traceback
+
+    import uvicorn
     print("=" * 60)
     print("SciRAG HTTP server starting...")
     print("=" * 60)

@@ -8,11 +8,9 @@ Architecture (Variant A):
 Uses KimiClient in fallback mode (localhost:1234) so no cloud API keys needed.
 """
 
-import json
 import logging
-import os
 import re
-from typing import Dict, List, Optional
+from typing import Dict
 
 logger = logging.getLogger(__name__)
 
