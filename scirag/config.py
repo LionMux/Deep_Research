@@ -124,6 +124,13 @@ class SciRAGConfig:
     faiss_index_path: str = "./scirag_data/faiss.index"
     chunk_metadata_path: str = "./scirag_data/chunks.json"
 
+    # === Retrieval (hybrid dense + BM25 sparse) ===
+    # mode: "hybrid" (dense + BM25 via RRF), "dense", or "sparse".
+    retrieval_mode: str = field(
+        default_factory=lambda: os.getenv("SCIRAG_RETRIEVAL_MODE", "hybrid").strip().lower()
+    )
+    retrieval_rrf_k: int = field(default_factory=lambda: int(os.getenv("SCIRAG_RETRIEVAL_RRF_K", "60")))
+
     # === Chunking ===
     chunk_size: int = 512
     chunk_overlap: int = 64
