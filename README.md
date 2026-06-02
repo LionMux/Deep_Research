@@ -38,15 +38,21 @@ pip install -r requirements.txt
 # Configure providers (copy and edit)
 cp .env.example .env        # then fill in PRIMARY_API_KEY / GEMINI_API_KEY / etc.
 
-# Run research
-python main.py query "What are the latest methods for dense passage retrieval?" --papers-dir ./samples/papers
+# Run research (after `pip install -e .` the `scirag` command is available)
+scirag query "What are the latest methods for dense passage retrieval?" --papers-dir ./samples/papers
 
 # Start API server
-python main.py api --port 8000
+scirag api --port 8000
 
 # Start MCP server (for Claude Code / Kimi Code)
-python main.py mcp
+scirag mcp
 ```
+
+All functionality lives behind the single **`scirag`** CLI (subcommands:
+`query`, `index`, `search`, `synthesize`, `extract`, `verify`, `orchestrate`,
+`eval`, `api`, `mcp`, `status`, `install-claude`). The legacy `python main.py …`
+and `python cli_orchestrator.py …` scripts still work as thin compatibility
+shims that forward to it.
 
 See [`.env.example`](./.env.example) for every supported environment variable.
 LLM providers are tried in fallback order (primary → Gemini → HF/DeepInfra → local).
@@ -77,11 +83,14 @@ scirag/                    # Core package
 ├── s2_client.py           # Semantic Scholar API client
 ├── citation_graph.py      # NetworkX citation graph
 ├── reranker.py            # BGE cross-encoder reranking
-├── attribution.py         # Post-hoc per-sentence citation
-├── verifier.py            # Fact verification
+├── attribution.py         # Post-hoc per-sentence citation (LLM)
+├── verifier.py            # Fact verification (LLM)
+├── claim_verifier.py      # Deterministic fail-closed claim auditing
+├── report_builder.py      # Structured report (numbered cites + references)
+├── evaluation.py          # Reproducible eval harness + metrics
 ├── embedder.py            # Sentence-transformers embeddings
 ├── faiss_store.py         # FAISS vector store
-├── hybrid_retriever.py    # Dense retrieval
+├── hybrid_retriever.py    # Hybrid BM25 + dense retrieval (RRF)
 ├── ingestion.py           # Document ingestion / chunking
 ├── document_classifier.py # Symbolic T/E/M/A classification
 ├── theme_materialize.py   # Theme/paper materialization
@@ -92,9 +101,12 @@ scirag/                    # Core package
 ├── state.py               # Shared runtime state
 ├── api.py                 # FastAPI app
 ├── mcp_server.py          # MCP server
-├── cli.py                 # `scirag` CLI entry
+├── cli.py                 # Unified `scirag` CLI entry (all subcommands)
 └── deep_search/           # Academic discovery (OpenAlex/CrossRef/ArXiv/S2)
 
+main.py                    # Compat shim -> scirag.cli
+cli_orchestrator.py        # Compat shim -> `scirag orchestrate`
+benchmarks/                # Fixed evaluation benchmark(s)
 tests/                     # pytest suite
 third_party/               # Vendored upstream repos (not linted)
 ```
