@@ -1,0 +1,21 @@
+{
+  "description": "Tiny fixed retrieval benchmark over samples/papers/. doc_ids are file stems (ingestion uses Path.stem). Queries have lexical overlap with the gold doc so BM25/sparse recall is deterministic and CI-stable without API keys.",
+  "corpus": "samples/papers",
+  "queries": [
+    {
+      "id": "q1",
+      "query": "dense passage retrieval dual encoder embeddings question answering",
+      "relevant_doc_ids": ["dense_passage_retrieval"]
+    },
+    {
+      "id": "q2",
+      "query": "bm25 sparse inverted index term frequency lexical ranking",
+      "relevant_doc_ids": ["bm25_sparse_retrieval"]
+    },
+    {
+      "id": "q3",
+      "query": "cross encoder reranking candidate passages relevance score",
+      "relevant_doc_ids": ["cross_encoder_reranking"]
+    }
+  ]
+}

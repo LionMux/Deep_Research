@@ -435,14 +435,63 @@ class SciRAGPipeline:
             logger.warning(f"Attribution failed: {e}")
             stages.append({"stage": "attribution", "time": round(time.time() - t, 2), "error": str(e)})
 
+        # === STAGE 7b: Deterministic claim verification (fail-closed) ===
+        t = time.time()
+        verification_result = None
+        try:
+            from .claim_verifier import ClaimVerifier
+            verifier_passages = [
+                {"document_id": c.get("document_id", ""), "text": c.get("text", "")}
+                for c in chunks
+            ]
+            cv = ClaimVerifier(min_support=self.config.verification_min_support)
+            report = cv.verify_text(final_text, verifier_passages)
+            if self.config.fail_closed:
+                final_text = cv.annotate(report, fail_closed=True)
+            verification_result = report.to_dict()
+            verification_result["fail_closed"] = self.config.fail_closed
+            stages.append({
+                "stage": "verification",
+                "time": round(time.time() - t, 2),
+                "faithfulness": verification_result["faithfulness"],
+                "unsupported": verification_result["unsupported"],
+            })
+            logger.info(
+                f"Verification: faithfulness={verification_result['faithfulness']:.0%}, "
+                f"{verification_result['unsupported']} unsupported claim(s)"
+            )
+        except Exception as e:
+            logger.warning(f"Claim verification failed: {e}")
+            stages.append({"stage": "verification", "time": round(time.time() - t, 2), "error": str(e)})
+
         total_time = time.time() - t0
         total_facts = sum(len(leaf.facts) for leaf in all_leaves)
         verified_facts = sum(1 for leaf in all_leaves for f in leaf.facts if f.verified)
         avg_confidence = sum(leaf.confidence for leaf in all_leaves) / max(len(all_leaves), 1)
 
+        # === STAGE 8: Structured scientific report ===
+        structured_report = None
+        try:
+            from .report_builder import ReportBuilder
+            title_map = {}
+            for c in chunks:
+                doc_id = c.get("document_id", "")
+                if doc_id and doc_id not in title_map:
+                    title_map[doc_id] = c.get("title", c.get("metadata", {}).get("title", doc_id))
+            structured_report = ReportBuilder().build(
+                query=query,
+                body_text=final_text,
+                title_map=title_map,
+                verification=verification_result,
+                tree_confidence=tree_stats.get("avg_confidence"),
+            )
+        except Exception as e:
+            logger.warning(f"Structured report build failed: {e}")
+
         result = {
             "query": query,
             "final_text": final_text,
+            "report_markdown": structured_report["markdown"] if structured_report else final_text,
             "tree": {
                 "sections": len(root.children),
                 "leaves": len(all_leaves),
@@ -458,6 +507,12 @@ class SciRAGPipeline:
             "s2_expansion": s2_stats if 's2_stats' in dir() else {"enabled": False},
             "deep_search": deep_search_stats,
             "attribution": attribution_result if attribution_result else {"coverage": 0, "enabled": False},
+            "verification": verification_result if verification_result else {"enabled": False},
+            "report": {
+                "references": structured_report["references"],
+                "num_references": structured_report["num_references"],
+                "confidence": structured_report["confidence"],
+            } if structured_report else {"enabled": False},
             "stats": {
                 "total_time_sec": round(total_time, 1),
                 "total_sections": len(root.children),

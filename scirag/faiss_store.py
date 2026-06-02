@@ -129,6 +129,17 @@ class FAISSVectorStore:
     def get_chunk(self, idx: int) -> Optional[Chunk]:
         return self._chunks.get(idx)
 
+    def all_chunks(self) -> List[Tuple[int, Chunk]]:
+        """Return all (index, chunk) pairs ordered by index.
+
+        Used by sparse/lexical retrievers (e.g. BM25) that need the full
+        corpus text rather than just dense-search hits.
+        """
+        return [(idx, self._chunks[idx]) for idx in sorted(self._chunks.keys())]
+
+    def __len__(self) -> int:
+        return self._next_id
+
     def load_index(self, index_path: str, db_path: str):
         """Load FAISS index and metadata from disk."""
         if _FAISS_AVAILABLE:

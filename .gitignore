@@ -1,38 +1,52 @@
-### AL ###
-#Template for AL projects for Dynamics 365 Business Central
-#launch.json folder
-.vscode/
-.agents/
-.kilo/
-.sixth/
-#Cache folder
-.alcache/
-.pytest_cache/
-.scirag_data/
-#Symbols folder
-.alpackages/
-__pycache__
-#Snapshots folder
-.snapshots/
-#Testing Output folder
-.output/
-#Extension App-file
-*.app
-.env
-#Rapid Application Development File
-rad.json
-#Translation Base-file
-*.g.xlf
-#License-files
-*.bclicense
-*.flf
-#Test results file
-TestResults.xml
-test_downloads/
-test/
+# ----------------------------------------------------------------------
+# Python
+# ----------------------------------------------------------------------
+__pycache__/
+*.py[cod]
+*.egg-info/
+*.egg
+build/
+dist/
+.eggs/
 
-AGENT.md
-
-# Python venv
+# Virtual environments
 .venv/
 venv/
+env/
+
+# Test / lint caches
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+.coverage
+htmlcov/
+
+# ----------------------------------------------------------------------
+# Secrets / local config
+# ----------------------------------------------------------------------
+.env
+.env.local
+
+# ----------------------------------------------------------------------
+# SciRAG data & runtime artifacts (kept local, not committed)
+# ----------------------------------------------------------------------
+# Research corpora (large PDFs). Use samples/papers/ for demos and tests.
+# Anchored to repo root so samples/papers/ stays tracked.
+/papers/
+/papers_subset/
+# Generated indexes / databases
+/data/
+*.faiss
+*.index
+*.db
+# Runtime cache, sessions, citation graph, S2 cache
+/scirag_data/
+/.scirag_data/
+
+# ----------------------------------------------------------------------
+# Editor / OS
+# ----------------------------------------------------------------------
+.vscode/
+.idea/
+.DS_Store
+.agents/

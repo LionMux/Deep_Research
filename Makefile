@@ -1,4 +1,4 @@
-.PHONY: help install install-dev lint format test precommit clean
+.PHONY: help install install-dev lint format test eval precommit clean
 
 help:
 	@echo "SciRAG — common tasks"
@@ -7,6 +7,7 @@ help:
 	@echo "  make lint         Run ruff lint checks"
 	@echo "  make format       Auto-format with ruff (and apply lint fixes)"
 	@echo "  make test         Run the pytest suite"
+	@echo "  make eval         Run the retrieval evaluation harness (sparse)"
 	@echo "  make precommit    Run all pre-commit hooks on the whole repo"
 	@echo "  make clean        Remove caches and build artifacts"
 
@@ -25,6 +26,9 @@ format:
 
 test:
 	pytest
+
+eval:
+	python -m scirag.evaluation --mode sparse --top-k 3
 
 precommit:
 	pre-commit run --all-files

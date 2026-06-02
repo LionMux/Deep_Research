@@ -5,9 +5,12 @@ Outline-guided synthesis with citation-graph reasoning for academic research.
 ## Features
 
 - **5-Phase Pipeline**: TreeNode outline → Symbolic Reasoning → S2 Citation Expansion → BGE Reranking → Post-Hoc Attribution
+- **Hybrid Retrieval**: BM25 (sparse) + dense embeddings fused with Reciprocal Rank Fusion
 - **1000+ Documents**: Ingestion, chunking, FAISS-CPU retrieval
 - **Citation Graph**: NetworkX-based with Semantic Scholar API expansion
-- **Fact Verification**: LLM-based per-sentence verification
+- **Fact Verification**: LLM-based per-sentence verification + deterministic fail-closed claim auditing
+- **Structured Reports**: sectioned output with numbered citations, a references list, and confidence flags
+- **Evaluation Harness**: reproducible `recall@k` / `precision@k` / `mrr` on a fixed benchmark
 - **MCP Server**: Claude Code / Kimi Code integration
 - **FastAPI**: HTTP API for programmatic access
 
@@ -35,18 +38,28 @@ pip install -r requirements.txt
 # Configure providers (copy and edit)
 cp .env.example .env        # then fill in PRIMARY_API_KEY / GEMINI_API_KEY / etc.
 
-# Run research
-python main.py query "What are the latest methods for dense passage retrieval?" --papers-dir ./papers
+# Run research (after `pip install -e .` the `scirag` command is available)
+scirag query "What are the latest methods for dense passage retrieval?" --papers-dir ./samples/papers
 
 # Start API server
-python main.py api --port 8000
+scirag api --port 8000
 
 # Start MCP server (for Claude Code / Kimi Code)
-python main.py mcp
+scirag mcp
 ```
+
+All functionality lives behind the single **`scirag`** CLI (subcommands:
+`query`, `index`, `search`, `synthesize`, `extract`, `verify`, `orchestrate`,
+`eval`, `api`, `mcp`, `status`, `install-claude`). The legacy `python main.py …`
+and `python cli_orchestrator.py …` scripts still work as thin compatibility
+shims that forward to it.
 
 See [`.env.example`](./.env.example) for every supported environment variable.
 LLM providers are tried in fallback order (primary → Gemini → HF/DeepInfra → local).
+
+A tiny demo corpus lives in [`samples/papers/`](./samples/papers). Large research
+corpora and generated indexes/caches are **not** committed (see `.gitignore`); point
+`--papers-dir` at your own directory of `.pdf` / `.md` / `.txt` files.
 
 ## API Endpoints
 
@@ -70,11 +83,14 @@ scirag/                    # Core package
 ├── s2_client.py           # Semantic Scholar API client
 ├── citation_graph.py      # NetworkX citation graph
 ├── reranker.py            # BGE cross-encoder reranking
-├── attribution.py         # Post-hoc per-sentence citation
-├── verifier.py            # Fact verification
+├── attribution.py         # Post-hoc per-sentence citation (LLM)
+├── verifier.py            # Fact verification (LLM)
+├── claim_verifier.py      # Deterministic fail-closed claim auditing
+├── report_builder.py      # Structured report (numbered cites + references)
+├── evaluation.py          # Reproducible eval harness + metrics
 ├── embedder.py            # Sentence-transformers embeddings
 ├── faiss_store.py         # FAISS vector store
-├── hybrid_retriever.py    # Dense retrieval
+├── hybrid_retriever.py    # Hybrid BM25 + dense retrieval (RRF)
 ├── ingestion.py           # Document ingestion / chunking
 ├── document_classifier.py # Symbolic T/E/M/A classification
 ├── theme_materialize.py   # Theme/paper materialization
@@ -85,9 +101,12 @@ scirag/                    # Core package
 ├── state.py               # Shared runtime state
 ├── api.py                 # FastAPI app
 ├── mcp_server.py          # MCP server
-├── cli.py                 # `scirag` CLI entry
+├── cli.py                 # Unified `scirag` CLI entry (all subcommands)
 └── deep_search/           # Academic discovery (OpenAlex/CrossRef/ArXiv/S2)
 
+main.py                    # Compat shim -> scirag.cli
+cli_orchestrator.py        # Compat shim -> `scirag orchestrate`
+benchmarks/                # Fixed evaluation benchmark(s)
 tests/                     # pytest suite
 third_party/               # Vendored upstream repos (not linted)
 ```
@@ -105,7 +124,24 @@ pre-commit install
 make lint     # ruff check .
 make format   # ruff check --fix + ruff format
 make test     # pytest
+make eval     # retrieval evaluation harness (sparse, deterministic)
 ```
+
+### Evaluation harness
+
+Retrieval quality is measured on a small fixed benchmark
+([`benchmarks/retrieval_benchmark.json`](./benchmarks/retrieval_benchmark.json))
+so quality is reproducible and regressions are caught:
+
+```bash
+python -m scirag.evaluation --benchmark benchmarks/retrieval_benchmark.json \
+    --mode sparse --top-k 3
+```
+
+Reports `recall@k`, `precision@k`, and `mrr`. `scirag.evaluation` also exposes
+`citation_precision` and `faithfulness` over a `VerificationReport` (see
+[`scirag/claim_verifier.py`](./scirag/claim_verifier.py)). Sparse mode is
+deterministic and needs no API keys or model downloads.
 
 Linting (`ruff`) and the test suite run in CI on every push and pull request
 (see [`.github/workflows/ci.yml`](./.github/workflows/ci.yml)). See
