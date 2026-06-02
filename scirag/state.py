@@ -116,7 +116,12 @@ def _build_retriever(state: dict):
     texts = [c.text for c in chunk_objects]
     embeddings = embedder.encode(texts)
     store.add_chunks(chunk_objects, embeddings)
-    state["retriever"] = HybridRetriever(vector_store=store, embedder=embedder)
+    mode = os.getenv("SCIRAG_RETRIEVAL_MODE", "hybrid").strip().lower()
+    rrf_k = int(os.getenv("SCIRAG_RETRIEVAL_RRF_K", "60"))
+    logger.info(f"Retriever mode={mode} (rrf_k={rrf_k})")
+    state["retriever"] = HybridRetriever(
+        vector_store=store, embedder=embedder, mode=mode, rrf_k=rrf_k
+    )
     return state["retriever"]
 
 
