@@ -109,7 +109,24 @@ pre-commit install
 make lint     # ruff check .
 make format   # ruff check --fix + ruff format
 make test     # pytest
+make eval     # retrieval evaluation harness (sparse, deterministic)
 ```
+
+### Evaluation harness
+
+Retrieval quality is measured on a small fixed benchmark
+([`benchmarks/retrieval_benchmark.json`](./benchmarks/retrieval_benchmark.json))
+so quality is reproducible and regressions are caught:
+
+```bash
+python -m scirag.evaluation --benchmark benchmarks/retrieval_benchmark.json \
+    --mode sparse --top-k 3
+```
+
+Reports `recall@k`, `precision@k`, and `mrr`. `scirag.evaluation` also exposes
+`citation_precision` and `faithfulness` over a `VerificationReport` (see
+[`scirag/claim_verifier.py`](./scirag/claim_verifier.py)). Sparse mode is
+deterministic and needs no API keys or model downloads.
 
 Linting (`ruff`) and the test suite run in CI on every push and pull request
 (see [`.github/workflows/ci.yml`](./.github/workflows/ci.yml)). See
