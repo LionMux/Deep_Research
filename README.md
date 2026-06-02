@@ -5,9 +5,12 @@ Outline-guided synthesis with citation-graph reasoning for academic research.
 ## Features
 
 - **5-Phase Pipeline**: TreeNode outline → Symbolic Reasoning → S2 Citation Expansion → BGE Reranking → Post-Hoc Attribution
+- **Hybrid Retrieval**: BM25 (sparse) + dense embeddings fused with Reciprocal Rank Fusion
 - **1000+ Documents**: Ingestion, chunking, FAISS-CPU retrieval
 - **Citation Graph**: NetworkX-based with Semantic Scholar API expansion
-- **Fact Verification**: LLM-based per-sentence verification
+- **Fact Verification**: LLM-based per-sentence verification + deterministic fail-closed claim auditing
+- **Structured Reports**: sectioned output with numbered citations, a references list, and confidence flags
+- **Evaluation Harness**: reproducible `recall@k` / `precision@k` / `mrr` on a fixed benchmark
 - **MCP Server**: Claude Code / Kimi Code integration
 - **FastAPI**: HTTP API for programmatic access
 
