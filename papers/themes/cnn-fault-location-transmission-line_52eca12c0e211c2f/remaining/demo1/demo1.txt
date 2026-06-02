@@ -1,2 +1,0 @@
-This is a demo text file for SciRAG MCP smoke testing.
-It contains simple information about CNN fault location and transmission lines.
