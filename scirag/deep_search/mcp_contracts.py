@@ -1,9 +1,7 @@
 from __future__ import annotations
 
 import time
-from dataclasses import dataclass
 from typing import Dict, List, Literal, Optional, TypedDict
-
 
 CoverageMode = Literal["balanced", "diverse", "rigorous"]
 StyleMode = Literal["engineer", "literature_review"]

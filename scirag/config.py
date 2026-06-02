@@ -2,7 +2,6 @@
 
 import os
 from dataclasses import dataclass, field
-from typing import Optional
 
 # Load .env file if python-dotenv is available
 try:

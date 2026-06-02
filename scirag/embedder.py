@@ -25,8 +25,9 @@ class SimpleEmbedder:
             return self._model
         # 1. Try local transformers model first (no network needed)
         try:
-            from transformers import AutoTokenizer, AutoModel
             import os
+
+            from transformers import AutoModel, AutoTokenizer
             if os.path.isdir(self.LOCAL_MODEL_PATH):
                 logger.info(f"Loading local embedder from {self.LOCAL_MODEL_PATH}")
                 self._tokenizer = AutoTokenizer.from_pretrained(self.LOCAL_MODEL_PATH)
@@ -49,9 +50,8 @@ class SimpleEmbedder:
             return self._model
 
     def _encode_transformers(self, texts: List[str]):
-        import torch
         import numpy as np
-        from typing import List
+        import torch
 
         def mean_pooling(model_output, attention_mask):
             token_embeddings = model_output[0]

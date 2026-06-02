@@ -6,10 +6,8 @@ Supports: .txt, .md, .pdf (with PyPDF2 fallback), .docx (with python-docx fallba
 """
 
 import logging
-import os
-import re
 from pathlib import Path
-from typing import Dict, List
+from typing import List
 
 logger = logging.getLogger(__name__)
 

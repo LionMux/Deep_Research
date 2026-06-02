@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import logging
-from typing import List, Optional, Sequence, Set, Tuple
+from typing import List, Sequence, Set, Tuple
 
 logger = logging.getLogger(__name__)
 
@@ -41,7 +41,7 @@ def bind_retriever_to_chunks_subset(
 
     # Lazy imports to avoid heavy startup cost.
     from scirag.embedder import EmbedderFactory
-    from scirag.faiss_store import FAISSVectorStore, Chunk
+    from scirag.faiss_store import Chunk, FAISSVectorStore
     from scirag.hybrid_retriever import HybridRetriever
 
     embedder = EmbedderFactory.create(prefer_bge=False)

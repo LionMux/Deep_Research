@@ -20,13 +20,13 @@ import logging
 import time
 from typing import Dict, List, Optional
 
-from .config import SciRAGConfig
-from .llm_client import KimiClient
-from .outline_generator import OutlineGenerator
-from .tree_node import TreeNode, GapCriticTree
 from .citation_graph import CitationGraph
+from .config import SciRAGConfig
 from .document_classifier import DocumentClassifier
 from .iterative_synthesizer import IterativeSynthesizer
+from .llm_client import KimiClient
+from .outline_generator import OutlineGenerator
+from .tree_node import GapCriticTree, TreeNode
 from .verifier import FactVerifier
 
 # Lazy import to avoid circular dependency during package init
@@ -168,6 +168,7 @@ class SciRAGPipeline:
                 # Avoid hard dependency on third_party package structure
                 import importlib.util
                 import pathlib
+
                 from .firecrawl_adapter import firecrawl_report_to_chunks
 
                 firecrawl_query = deep_search_query or getattr(self.config, "firecrawl_deep_search_query", "") or query
@@ -276,11 +277,11 @@ class SciRAGPipeline:
         # === STAGE 1b: Symbolic Reasoning (Phase 2) ===
         t = time.time()
         logger.info("\n[1b/7] Symbolic Reasoning (T/E/A segments + relationships)...")
-        
+
         # Lazy init SymbolicReasoner
         if self._symbolic_reasoner_instance is None:
             self._symbolic_reasoner_instance = _get_symbolic_reasoner(self.client, self.config)
-        
+
         # Convert chunks to papers format for symbolic reasoning
         papers_for_symbolic = []
         seen_doc_ids = set()
@@ -293,7 +294,7 @@ class SciRAGPipeline:
                     "text": c.get("text", ""),
                 })
                 seen_doc_ids.add(did)
-        
+
         symbolic_result = None
         if papers_for_symbolic:
             try:
@@ -319,7 +320,7 @@ class SciRAGPipeline:
         # === STAGE 2: Build retriever ===
         if retriever is None:
             from .embedder import EmbedderFactory
-            from .faiss_store import FAISSVectorStore, Chunk
+            from .faiss_store import Chunk, FAISSVectorStore
             from .hybrid_retriever import HybridRetriever
 
             logger.info("\n[2/7] Building local retriever (FAISS-CPU)...")
@@ -392,7 +393,7 @@ class SciRAGPipeline:
         # === STAGE 6: Tree stats ===
         t = time.time()
         logger.info("\n[6/7] Computing tree statistics...")
-        
+
         # Build GapCriticTree just for stats
         gap_critic = GapCriticTree(
             llm_generate=lambda n, ctx: "",

@@ -23,8 +23,7 @@ Usage:
 
 import logging
 import os
-from pathlib import Path
-from typing import Dict, List, Optional, Tuple, Union
+from typing import Dict, List, Optional, Tuple
 
 logger = logging.getLogger(__name__)
 
@@ -119,7 +118,7 @@ class SciRAGReranker:
             logger.debug("CPU mode: fp16 disabled")
 
         self._loaded = True
-        logger.info(f"Reranker model loaded successfully")
+        logger.info("Reranker model loaded successfully")
 
     @staticmethod
     def _sigmoid(x: float) -> float:

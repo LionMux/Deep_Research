@@ -4,12 +4,11 @@ Generates research outline from query using LLM API.
 Now with TreeNode support for recursive gap_critic.
 """
 
-import json
 import logging
-from typing import List, Dict, Optional
+from typing import Dict, List
 
-from .llm_client import KimiClient
 from .config import SciRAGConfig
+from .llm_client import KimiClient
 from .tree_node import TreeNode
 
 logger = logging.getLogger(__name__)

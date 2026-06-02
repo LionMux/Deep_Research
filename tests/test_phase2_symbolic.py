@@ -13,12 +13,18 @@ Run: python tests/test_phase2_symbolic.py
 """
 
 import sys
+
 sys.path.insert(0, '.')
 
 from scirag.symbolic_reasoning import (
-    SymbolicReasoner, Segment, Triple, InfoUnit, SymbolicRelationship,
-    is_heading, is_main_heading, split_into_paragraphs,
-    INFO_UNIT_TYPES, SPO_TYPES, SPO_GOOD_STATES,
+    INFO_UNIT_TYPES,
+    SPO_GOOD_STATES,
+    InfoUnit,
+    SymbolicReasoner,
+    Triple,
+    is_heading,
+    is_main_heading,
+    split_into_paragraphs,
 )
 
 

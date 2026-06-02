@@ -1,4 +1,4 @@
-﻿#!/usr/bin/env python3
+#!/usr/bin/env python3
 """
 SciRAG Local LLM Orchestrator — Entry point (Variant A).
 
@@ -16,7 +16,6 @@ Flow:
 
 import argparse
 import logging
-import os
 import sys
 from pathlib import Path
 

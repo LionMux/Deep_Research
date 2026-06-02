@@ -35,10 +35,10 @@ def _load_env():
 
 def cmd_query(args):
     """Run full SciRAG pipeline for a query."""
-    from scirag.llm_client import PrimaryClient
-    from scirag.config import SciRAGConfig
-    from scirag.pipeline import SciRAGPipeline
     from scirag.citation_graph import CitationGraph
+    from scirag.config import SciRAGConfig
+    from scirag.llm_client import PrimaryClient
+    from scirag.pipeline import SciRAGPipeline
 
     # Все настройки берем из .env через SciRAGConfig (PRIMARY_*/GEMINI_* + бэквард с KIMI_*)
     config = SciRAGConfig()
@@ -75,9 +75,9 @@ def cmd_query(args):
 
 def cmd_index(args):
     """Index papers into vector store."""
-    from scirag.ingestion import ingest_directory
     from scirag.embedder import EmbedderFactory
     from scirag.faiss_store import FAISSVectorStore
+    from scirag.ingestion import ingest_directory
 
     chunks = ingest_directory(args.papers_dir)
     logger.info(f"Ingested {len(chunks)} chunks")
@@ -119,13 +119,14 @@ def cmd_search(args):
 def cmd_api(args):
     """Start FastAPI server."""
     import uvicorn
+
     from scirag.api import app
     uvicorn.run(app, host=args.host, port=args.port)
 
 
 def cmd_mcp(args):
     """Start MCP server."""
-    from scirag.mcp_server import mcp, _MCP_AVAILABLE
+    from scirag.mcp_server import _MCP_AVAILABLE, mcp
     if _MCP_AVAILABLE:
         mcp.run(transport="stdio")
     else:
@@ -158,7 +159,7 @@ def main():
     a.add_argument("--port", "-p", type=int, default=8000)
 
     # mcp
-    m = subparsers.add_parser("mcp", help="Start MCP server")
+    subparsers.add_parser("mcp", help="Start MCP server")
 
     args = parser.parse_args()
     if not args.command:

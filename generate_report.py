@@ -65,4 +65,4 @@ for i, (query, sections_count) in enumerate(sections, 1):
 
 print("\n" + "=" * 60)
 print("All sections synthesized!")
-print(f"Saved to: report_sections.json")
+print("Saved to: report_sections.json")

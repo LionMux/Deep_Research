@@ -12,9 +12,10 @@ Run: python tests/test_phase5_attribution.py
 """
 
 import sys
+
 sys.path.insert(0, '.')
 
-from scirag.attribution import PostHocAttributor, AttributedSentence
+from scirag.attribution import AttributedSentence, PostHocAttributor
 
 
 def test_sentence_splitting():
@@ -78,10 +79,6 @@ def test_attribution_report():
 
     attr = PostHocAttributor(MockClient())
     text = "Sentence one. Sentence two [1]. Sentence three."
-    chunks = [
-        {"document_id": "doc1", "text": "BERT achieves 95%."},
-        {"document_id": "doc2", "text": "GPT achieves 92%."},
-    ]
 
     # Test split + detect on report
     sentences = attr.split_sentences(text)
@@ -93,9 +90,6 @@ def test_attribution_report():
 def test_integration_imports():
     """Test all Phase 5 imports work."""
     print("\n=== Test: Integration Imports ===")
-    from scirag.attribution import PostHocAttributor, AttributedSentence
-    from scirag.pipeline import SciRAGPipeline
-    from scirag.config import SciRAGConfig
     print("  ✓ All imports OK")
 
 

@@ -7,7 +7,7 @@ import re
 import shutil
 from dataclasses import dataclass
 from pathlib import Path
-from typing import List, Optional, Sequence, Tuple
+from typing import List, Sequence, Tuple
 
 THEME_META_VERSION = 1
 
@@ -171,7 +171,6 @@ def materialize_used_remaining(
 
     plan = compute_materialize_plan(base_papers_dir=base_dir, used_doc_ids=used_doc_ids)
     used_set = set(plan.used_doc_ids)
-    remaining_set = set(plan.remaining_doc_ids)
 
     pid_to_path = build_paper_id_to_path_map(base_dir)
 

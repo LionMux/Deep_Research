@@ -12,10 +12,11 @@ Run: python tests/test_phase4_reranker.py
 """
 
 import sys
+
 sys.path.insert(0, '.')
 
-from scirag.reranker import SciRAGReranker
 from scirag.config import SciRAGConfig
+from scirag.reranker import SciRAGReranker
 
 
 def test_reranker_init():
@@ -126,12 +127,10 @@ def test_config_integration():
 def test_synthesizer_accepts_reranker():
     """Test IterativeSynthesizer accepts reranker parameter."""
     print("\n=== Test: Synthesizer Reranker ===")
-    from scirag.iterative_synthesizer import IterativeSynthesizer
-    from scirag.llm_client import KimiClient
-    from scirag.config import SciRAGConfig
-
     # We can't init full synthesizer without API key, but we can test the signature
     import inspect
+
+    from scirag.iterative_synthesizer import IterativeSynthesizer
     sig = inspect.signature(IterativeSynthesizer.__init__)
     params = list(sig.parameters.keys())
     assert "reranker" in params
@@ -143,7 +142,6 @@ def test_pipeline_reranker_property():
     print("\n=== Test: Pipeline Reranker ===")
     from scirag.pipeline import SciRAGPipeline
 
-    import inspect
     # Check that reranker property exists
     assert hasattr(SciRAGPipeline, "reranker")
     print("  ✓ Pipeline has reranker property")

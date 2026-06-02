@@ -14,11 +14,16 @@ Run: python tests/test_phase3_s2.py
 
 import sys
 import tempfile
+
 sys.path.insert(0, '.')
 
 from scirag.s2_client import (
-    SemanticScholarClient, S2Paper, S2Cache, S2RateLimiter,
-    _SCHOLAR_AVAILABLE, _SCHOLAR_PATH,
+    _SCHOLAR_AVAILABLE,
+    _SCHOLAR_PATH,
+    S2Cache,
+    S2Paper,
+    S2RateLimiter,
+    SemanticScholarClient,
 )
 
 
@@ -146,7 +151,7 @@ def test_client_real_api():
     print("\n=== Test: Real S2 API ===")
     if not _SCHOLAR_AVAILABLE:
         print("  ⊘ SKIP: semanticscholar not available")
-        return True
+        return
 
     client = SemanticScholarClient(min_delay=1.0)
 
@@ -173,7 +178,6 @@ def test_client_real_api():
         print(f"  ✓ Citations: found {len(cites)}")
 
     print(f"  Cache: {client.cache.stats()}")
-    return True
 
 
 def test_citation_graph_integration():
