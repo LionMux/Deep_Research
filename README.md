@@ -36,7 +36,7 @@ pip install -r requirements.txt
 cp .env.example .env        # then fill in PRIMARY_API_KEY / GEMINI_API_KEY / etc.
 
 # Run research
-python main.py query "What are the latest methods for dense passage retrieval?" --papers-dir ./papers
+python main.py query "What are the latest methods for dense passage retrieval?" --papers-dir ./samples/papers
 
 # Start API server
 python main.py api --port 8000
@@ -47,6 +47,10 @@ python main.py mcp
 
 See [`.env.example`](./.env.example) for every supported environment variable.
 LLM providers are tried in fallback order (primary → Gemini → HF/DeepInfra → local).
+
+A tiny demo corpus lives in [`samples/papers/`](./samples/papers). Large research
+corpora and generated indexes/caches are **not** committed (see `.gitignore`); point
+`--papers-dir` at your own directory of `.pdf` / `.md` / `.txt` files.
 
 ## API Endpoints
 
