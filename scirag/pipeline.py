@@ -435,6 +435,35 @@ class SciRAGPipeline:
             logger.warning(f"Attribution failed: {e}")
             stages.append({"stage": "attribution", "time": round(time.time() - t, 2), "error": str(e)})
 
+        # === STAGE 7b: Deterministic claim verification (fail-closed) ===
+        t = time.time()
+        verification_result = None
+        try:
+            from .claim_verifier import ClaimVerifier
+            verifier_passages = [
+                {"document_id": c.get("document_id", ""), "text": c.get("text", "")}
+                for c in chunks
+            ]
+            cv = ClaimVerifier(min_support=self.config.verification_min_support)
+            report = cv.verify_text(final_text, verifier_passages)
+            if self.config.fail_closed:
+                final_text = cv.annotate(report, fail_closed=True)
+            verification_result = report.to_dict()
+            verification_result["fail_closed"] = self.config.fail_closed
+            stages.append({
+                "stage": "verification",
+                "time": round(time.time() - t, 2),
+                "faithfulness": verification_result["faithfulness"],
+                "unsupported": verification_result["unsupported"],
+            })
+            logger.info(
+                f"Verification: faithfulness={verification_result['faithfulness']:.0%}, "
+                f"{verification_result['unsupported']} unsupported claim(s)"
+            )
+        except Exception as e:
+            logger.warning(f"Claim verification failed: {e}")
+            stages.append({"stage": "verification", "time": round(time.time() - t, 2), "error": str(e)})
+
         total_time = time.time() - t0
         total_facts = sum(len(leaf.facts) for leaf in all_leaves)
         verified_facts = sum(1 for leaf in all_leaves for f in leaf.facts if f.verified)
@@ -458,6 +487,7 @@ class SciRAGPipeline:
             "s2_expansion": s2_stats if 's2_stats' in dir() else {"enabled": False},
             "deep_search": deep_search_stats,
             "attribution": attribution_result if attribution_result else {"coverage": 0, "enabled": False},
+            "verification": verification_result if verification_result else {"enabled": False},
             "stats": {
                 "total_time_sec": round(total_time, 1),
                 "total_sections": len(root.children),

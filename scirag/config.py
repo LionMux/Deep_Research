@@ -131,6 +131,16 @@ class SciRAGConfig:
     )
     retrieval_rrf_k: int = field(default_factory=lambda: int(os.getenv("SCIRAG_RETRIEVAL_RRF_K", "60")))
 
+    # === Claim verification (fail-closed) ===
+    # When true, report sentences not supported by any source passage are flagged.
+    fail_closed: bool = field(
+        default_factory=lambda: os.getenv("SCIRAG_FAIL_CLOSED", "true").strip().lower() in ("1", "true", "yes", "on")
+    )
+    # Minimum lexical-containment support for a sentence to count as grounded.
+    verification_min_support: float = field(
+        default_factory=lambda: float(os.getenv("SCIRAG_VERIFY_MIN_SUPPORT", "0.35"))
+    )
+
     # === Chunking ===
     chunk_size: int = 512
     chunk_overlap: int = 64
